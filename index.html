@@ -51,33 +51,31 @@
   @media (max-width:860px){ aside{position:fixed;right:0;top:0;bottom:0;transform:translateX(100%);transition:transform .25s; z-index:20;width:86%;} aside.open{transform:translateX(0);} }
 
   .table-scene{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 16px 8px;overflow-y:auto;}
-  .felt{width:min(920px,97%);border-radius:220px 220px 24px 24px;background:
-      radial-gradient(ellipse at 50% 12%, var(--felt) 0%, var(--felt-dark) 78%);
-      border:6px solid var(--gold); box-shadow: inset 0 0 60px rgba(0,0,0,0.6), 0 10px 40px rgba(0,0,0,0.6);
-      padding:22px 26px 30px; position:relative; min-height:520px;}
-  .felt::before{content:'VANTAGE ROW';position:absolute;top:212px;left:50%;transform:translateX(-50%);
-      font-family:'Bebas Neue';font-size:18px;letter-spacing:6px;color:var(--felt-line);pointer-events:none;z-index:0;}
-  .dealer-zone, .seats-row{position:relative;z-index:1;}
-  .table-msg{text-align:center;font-family:'Space Mono';font-size:13px;color:var(--cyan);margin-top:2px;min-height:18px;}
-  .dealer-zone{display:flex;flex-direction:column;align-items:center;padding-top:12px;min-height:150px;}
-  .zone-label{font-family:'Bebas Neue';letter-spacing:3px;color:var(--gold-bright);font-size:14px;margin-bottom:6px;text-shadow:0 0 8px rgba(0,0,0,0.6);}
-  .hand{display:flex;justify-content:center;min-height:96px;}
-  .card{width:56px;height:82px;border-radius:8px;background:#fff;color:#111;display:flex;flex-direction:column;justify-content:space-between;padding:5px 6px;font-weight:700;font-family:'Space Mono',monospace;font-size:14px;box-shadow:0 4px 10px rgba(0,0,0,0.5);margin-left:-16px;border:1px solid #0002;animation:deal .25s ease-out;flex-shrink:0;}
+  .felt{width:min(920px,97%);aspect-ratio:1536/1024;position:relative;
+      background-image:url('assets/table-bg.png'); background-size:100% 100%; background-position:center;
+      border-radius:14px; box-shadow:0 0 40px rgba(255,46,136,0.18), 0 10px 40px rgba(0,0,0,0.6);
+      overflow:hidden;}
+  .dealer-zone{position:absolute; left:50%; top:42%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; z-index:2;}
+  .table-msg{text-align:center;font-family:'Space Mono';font-size:13px;color:var(--cyan);margin:8px 0 2px;min-height:18px;}
+  .zone-label{font-family:'Bebas Neue';letter-spacing:3px;color:var(--gold-bright);font-size:13px;margin-bottom:4px;text-shadow:0 2px 6px rgba(0,0,0,0.9);}
+  .hand{display:flex;justify-content:center;min-height:70px;}
+  .card{width:44px;height:64px;border-radius:6px;background:#fff;color:#111;display:flex;flex-direction:column;justify-content:space-between;padding:4px 5px;font-weight:700;font-family:'Space Mono',monospace;font-size:12px;box-shadow:0 4px 10px rgba(0,0,0,0.5);margin-left:-14px;border:1px solid #0002;animation:deal .25s ease-out;flex-shrink:0;}
   .card:first-child{margin-left:0;}
   .card.red{color:#c31432;}
   .card.back{background:repeating-linear-gradient(45deg, var(--pink), var(--pink) 4px, var(--cyan) 4px, var(--cyan) 8px); }
   @keyframes deal{from{transform:translateY(-20px) scale(.8);opacity:0} to{transform:translateY(0) scale(1);opacity:1}}
-  .hand-total{margin-top:6px;font-family:'Space Mono';font-size:13px;color:var(--gold-bright);background:#0007;padding:2px 9px;border-radius:6px;}
+  .hand-total{margin-top:4px;font-family:'Space Mono';font-size:12px;color:var(--gold-bright);background:#0009;padding:2px 8px;border-radius:6px;}
 
-  .seats-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px;}
-  .seat{background:rgba(0,0,0,0.28);border:1px solid var(--felt-line);border-radius:14px;padding:12px 12px;min-width:140px;max-width:150px;text-align:center;position:relative;}
-  .seat.me{border-color:var(--cyan);box-shadow:0 0 14px rgba(47,243,224,0.25);}
-  .seat.turn{border-color:var(--gold-bright);box-shadow:0 0 16px rgba(244,217,118,0.55);}
-  .seat.empty{opacity:.55;border-style:dashed;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:90px;}
-  .seat.empty:hover{opacity:.9;border-color:var(--gold);}
-  .seat .pname{font-weight:700;font-size:13px;color:var(--text);margin-bottom:4px;}
-  .seat .pbet{font-family:'Space Mono';font-size:12px;color:var(--gold-bright);}
-  .seat .status-pill{position:absolute;top:-10px;right:6px;font-size:9px;padding:2px 7px;border-radius:999px;font-weight:700;letter-spacing:.5px;}
+  .seats-row{position:absolute; inset:0; z-index:1;}
+  .seat{position:absolute; top:58%; transform:translate(-50%,-50%);
+      background:rgba(5,3,8,0.55);border:1px solid var(--felt-line);border-radius:12px;padding:8px 8px;width:clamp(76px, 15vw, 118px);text-align:center;backdrop-filter:blur(1px);}
+  .seat.me{border-color:var(--cyan);box-shadow:0 0 14px rgba(47,243,224,0.35);}
+  .seat.turn{border-color:var(--gold-bright);box-shadow:0 0 16px rgba(244,217,118,0.6);}
+  .seat.empty{opacity:.7;border-style:dashed;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:56px;font-size:11px;padding:6px;}
+  .seat.empty:hover{opacity:1;border-color:var(--gold);}
+  .seat .pname{font-weight:700;font-size:12px;color:var(--text);margin-bottom:3px;text-shadow:0 1px 3px #000;}
+  .seat .pbet{font-family:'Space Mono';font-size:11px;color:var(--gold-bright);}
+  .seat .status-pill{position:absolute;top:-10px;right:4px;font-size:8px;padding:2px 6px;border-radius:999px;font-weight:700;letter-spacing:.5px;}
   .status-pill.stand{background:var(--cyan);color:#052;}
   .status-pill.bust{background:var(--danger);color:#fff;}
   .status-pill.blackjack{background:var(--gold);color:#301;}
@@ -85,9 +83,9 @@
   .status-pill.lose{background:var(--danger);color:#fff;}
   .status-pill.push{background:#888;color:#fff;}
   .status-pill.active{background:var(--pink);color:#fff;}
-  .turn-flag{font-family:'Space Mono';font-size:10px;color:var(--gold-bright);margin-top:4px;}
+  .turn-flag{font-family:'Space Mono';font-size:9px;color:var(--gold-bright);margin-top:3px;}
   .host-hint{color:var(--gold-bright);font-size:10px;}
-  .kick-btn{position:absolute;top:-10px;left:6px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;line-height:20px;padding:0;}
+  .kick-btn{position:absolute;top:-10px;left:4px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;border:none;font-size:10px;font-weight:700;cursor:pointer;line-height:18px;padding:0;}
   .kick-btn:hover{background:#ff7a7a;}
 
   .controls-bar{width:min(920px,97%);margin:14px auto 20px;background:var(--void-2);border:1px solid var(--gold);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;}
@@ -176,6 +174,9 @@ const FIREBASE_CONFIG = {
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const SUITS = ['♠','♥','♦','♣'];
 const SEAT_COUNT = 5;
+// Horizontal positions (% of felt image width) measured from the actual betting-spot
+// markers painted into assets/table-bg.png. Vertical position is fixed in CSS (.seat{top:58%}).
+const SEAT_X_PERCENT = [14.0, 32.6, 49.7, 68.0, 85.4];
 const CHIP_VALUES = [25,100,250,500];
 const STARTING_CHIPS = 1000;
 const WHEEL_SEGMENTS = [50,100,150,75,500,25,200,1000,50,100,250,75];
@@ -655,9 +656,10 @@ function renderTable(){
   }
 
   if(S._builtView!=='table'){
-    main.innerHTML = '<div class="table-scene" id="tableScene"><div class="felt">' +
-      '<div id="dealerZone" class="dealer-zone"></div>' +
+    main.innerHTML = '<div class="table-scene" id="tableScene">' +
       '<div class="table-msg" id="tableMsgEl"></div>' +
+      '<div class="felt">' +
+      '<div id="dealerZone" class="dealer-zone"></div>' +
       '<div class="seats-row" id="seatsRow"></div>' +
       '</div><div id="controlsBar"></div></div>';
     S._builtView='table';
@@ -685,14 +687,15 @@ function renderTable(){
   if(S._sig.seats!==seatsSig){
     const isHost = t.seats[0] && t.seats[0].name===S.myName;
     const seatsHtml = t.seats.map((s,i)=>{
-      if(!s){ return '<div class="seat empty" data-sit="'+i+'">'+(i===0?'+ Sit Here <span class="host-hint">(Host)</span>':'+ Sit Here')+'</div>'; }
+      const leftStyle = 'left:'+SEAT_X_PERCENT[i]+'%;';
+      if(!s){ return '<div class="seat empty" data-sit="'+i+'" style="'+leftStyle+'">'+(i===0?'+ Sit Here <span class="host-hint">(Host)</span>':'+ Sit Here')+'</div>'; }
       const isMe = s.name===S.myName;
       const isTurn = t.phase==='playing' && t.turnIndex===i;
       const cardsHtml = s.hand.map(c=>cardHtml(c,false)).join('');
       let pillClass = s.status, pillLabel = s.status.toUpperCase();
       if(s.result){ pillClass=s.result; pillLabel=s.result.toUpperCase(); }
       const showKick = isHost && !isMe && i!==0 && t.phase==='betting';
-      return '<div class="seat '+(isMe?'me':'')+' '+(isTurn?'turn':'')+'">' +
+      return '<div class="seat '+(isMe?'me':'')+' '+(isTurn?'turn':'')+'" style="'+leftStyle+'">' +
         (showKick?'<button class="kick-btn" data-kick="'+i+'" title="Kick from seat">✕</button>':'') +
         '<div class="status-pill '+pillClass+'">'+pillLabel+'</div>' +
         '<div class="pname">'+esc(s.name)+(isMe?' (you)':'')+(i===0?' <span class="host-hint">👑</span>':'')+'</div>' +
