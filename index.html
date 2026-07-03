@@ -221,12 +221,12 @@ async function fbTransaction(path, mutator){
 }
 async function tableTransaction(mutator){
   const res = await fbTransaction('table', current=>{
-    const t = current || freshTable();
+    const t = normalizeTable(current);
     const ok = mutator(t);
     if(ok===false) return undefined;
     return t;
   });
-  return (res.committed && res.snapshot) ? res.snapshot.val() : null;
+  return (res.committed && res.snapshot) ? normalizeTable(res.snapshot.val()) : null;
 }
 
 /* ===================== CARD LOGIC ===================== */
@@ -250,6 +250,27 @@ function cardHtml(c,hidden){ if(hidden) return '<div class="card back"></div>'; 
 /* ===================== TABLE STATE HELPERS ===================== */
 function freshTable(){
   return { phase:'betting', seats:Array(SEAT_COUNT).fill(null), dealerHand:[], deck:[], turnIndex:-1, turnStartedAt:0, roundId:0, message:'Grab a seat and place your bet.' };
+}
+// Firebase strips null values (and empty arrays/objects) on write, so an all-empty
+// seats array can vanish entirely, and sparse seat data can come back as an object
+// instead of an array. Always rebuild a canonical 5-slot array on read.
+function normalizeTable(raw){
+  const t = raw || {};
+  const rawSeats = t.seats || {};
+  const seats = [];
+  for(let i=0;i<SEAT_COUNT;i++){
+    seats.push(rawSeats[i] != null ? rawSeats[i] : null);
+  }
+  return {
+    phase: t.phase || 'betting',
+    seats: seats,
+    dealerHand: t.dealerHand || [],
+    deck: t.deck || [],
+    turnIndex: (typeof t.turnIndex === 'number') ? t.turnIndex : -1,
+    turnStartedAt: t.turnStartedAt || 0,
+    roundId: t.roundId || 0,
+    message: t.message || 'Grab a seat and place your bet.'
+  };
 }
 function seatName(t,i){ return t.seats[i] ? t.seats[i].name : ''; }
 function firstOpenTurn(t, fromIdx){
@@ -277,7 +298,7 @@ async function afterLogin(){
     await fbSet('players/'+S.myName, {chips:STARTING_CHIPS, lastSpinDate:null});
     await pushChat('system', S.myName+' just walked into the casino.');
   }
-  fbListen('table', val=>{ S.table = val || freshTable(); renderTable(); });
+  fbListen('table', val=>{ S.table = normalizeTable(val); renderTable(); });
   fbListen('chat', val=>{ S.chat = val || []; renderChat(); });
   fbListen('players/'+S.myName, val=>{
     const profile = val || {chips:STARTING_CHIPS, lastSpinDate:null};
@@ -320,7 +341,7 @@ async function standUp(){
 }
 async function placeBet(amount){
   if(amount<=0) return;
-  const t = await fbGet('table');
+  const t = normalizeTable(await fbGet('table'));
   if(!t || t.phase!=='betting') return;
   const idx = t.seats.findIndex(s=>s && s.name===S.myName);
   if(idx===-1) return;
