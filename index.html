@@ -86,6 +86,9 @@
   .status-pill.push{background:#888;color:#fff;}
   .status-pill.active{background:var(--pink);color:#fff;}
   .turn-flag{font-family:'Space Mono';font-size:10px;color:var(--gold-bright);margin-top:4px;}
+  .host-hint{color:var(--gold-bright);font-size:10px;}
+  .kick-btn{position:absolute;top:-10px;left:6px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;line-height:20px;padding:0;}
+  .kick-btn:hover{background:#ff7a7a;}
 
   .controls-bar{width:min(920px,97%);margin:14px auto 20px;background:var(--void-2);border:1px solid var(--gold);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;}
   .btn{border:none;border-radius:9px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Inter';transition:.15s;}
@@ -341,14 +344,37 @@ async function sitDown(idx){
     return true;
   });
 }
-async function standUp(){
-  await tableTransaction(t=>{
-    if(t.phase!=='betting') return false;
-    const idx = t.seats.findIndex(s=>s && s.name===S.myName);
-    if(idx===-1) return false;
-    t.seats[idx]=null;
+async function vacateSeat(idx){
+  const t = normalizeTable(await fbGet('table'));
+  if(t.phase!=='betting') return;
+  const seat = t.seats[idx];
+  if(!seat) return;
+  const ownerName = seat.name;
+  const bet = seat.bet || 0;
+  if(bet>0){
+    await fbTransaction('players/'+ownerName+'/chips', cur=>(cur==null?STARTING_CHIPS:cur)+bet);
+  }
+  await tableTransaction(tt=>{
+    if(tt.phase!=='betting') return false;
+    if(!tt.seats[idx] || tt.seats[idx].name!==ownerName) return false; // seat changed underneath us, abort
+    tt.seats[idx]=null;
     return true;
   });
+}
+async function standUp(){
+  const t = S.table;
+  if(!t) return;
+  const idx = t.seats.findIndex(s=>s && s.name===S.myName);
+  if(idx===-1) return;
+  await vacateSeat(idx);
+}
+async function kickSeat(idx){
+  const t = S.table;
+  if(!t || idx===0) return;
+  const host = t.seats[0];
+  if(!host || host.name!==S.myName) return; // only the seat-1 occupant may kick
+  if(!t.seats[idx]) return;
+  await vacateSeat(idx);
 }
 async function placeBet(amount){
   if(amount<=0) return;
@@ -657,16 +683,19 @@ function renderTable(){
 
   const seatsSig = JSON.stringify(t.seats)+'|'+t.turnIndex+'|'+t.phase;
   if(S._sig.seats!==seatsSig){
+    const isHost = t.seats[0] && t.seats[0].name===S.myName;
     const seatsHtml = t.seats.map((s,i)=>{
-      if(!s){ return '<div class="seat empty" data-sit="'+i+'">+ Sit Here</div>'; }
+      if(!s){ return '<div class="seat empty" data-sit="'+i+'">'+(i===0?'+ Sit Here <span class="host-hint">(Host)</span>':'+ Sit Here')+'</div>'; }
       const isMe = s.name===S.myName;
       const isTurn = t.phase==='playing' && t.turnIndex===i;
       const cardsHtml = s.hand.map(c=>cardHtml(c,false)).join('');
       let pillClass = s.status, pillLabel = s.status.toUpperCase();
       if(s.result){ pillClass=s.result; pillLabel=s.result.toUpperCase(); }
+      const showKick = isHost && !isMe && i!==0 && t.phase==='betting';
       return '<div class="seat '+(isMe?'me':'')+' '+(isTurn?'turn':'')+'">' +
+        (showKick?'<button class="kick-btn" data-kick="'+i+'" title="Kick from seat">✕</button>':'') +
         '<div class="status-pill '+pillClass+'">'+pillLabel+'</div>' +
-        '<div class="pname">'+esc(s.name)+(isMe?' (you)':'')+'</div>' +
+        '<div class="pname">'+esc(s.name)+(isMe?' (you)':'')+(i===0?' <span class="host-hint">👑</span>':'')+'</div>' +
         '<div class="hand" style="min-height:60px;transform:scale(0.8)">'+cardsHtml+'</div>' +
         (s.hand.length?'<div class="hand-total">'+handTotal(s.hand)+'</div>':'') +
         '<div class="pbet">Bet: '+s.bet+'</div>' +
@@ -676,6 +705,7 @@ function renderTable(){
     const seatsRow = document.getElementById('seatsRow');
     seatsRow.innerHTML = seatsHtml;
     seatsRow.querySelectorAll('[data-sit]').forEach(el=>{ el.onclick=()=>sitDown(parseInt(el.dataset.sit,10)); });
+    seatsRow.querySelectorAll('[data-kick]').forEach(el=>{ el.onclick=()=>kickSeat(parseInt(el.dataset.kick,10)); });
     S._sig.seats = seatsSig;
   }
 
