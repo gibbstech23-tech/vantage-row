@@ -259,7 +259,18 @@ function normalizeTable(raw){
   const rawSeats = t.seats || {};
   const seats = [];
   for(let i=0;i<SEAT_COUNT;i++){
-    seats.push(rawSeats[i] != null ? rawSeats[i] : null);
+    const rs = rawSeats[i];
+    if(rs != null){
+      seats.push({
+        name: rs.name,
+        bet: rs.bet || 0,
+        hand: rs.hand || [],
+        status: rs.status || 'active',
+        result: rs.result || null
+      });
+    } else {
+      seats.push(null);
+    }
   }
   return {
     phase: t.phase || 'betting',
