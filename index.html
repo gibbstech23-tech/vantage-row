@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vantage Row Casino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase (free tier) — provides the shared multiplayer backend. No player accounts required. -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --void:#0b0710; --void-2:#150c1e;
+    --felt:#0f3d2e; --felt-dark:#092319; --felt-line: rgba(212,175,55,0.35);
+    --gold:#d4af37; --gold-bright:#f4d976;
+    --pink:#ff2e88; --cyan:#2ff3e0;
+    --text:#f5efe6; --text-dim:#c9bfc9;
+    --danger:#ff4d4d; --good:#3ddc84;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--void);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden;}
+  #app{height:100vh;width:100vw;display:flex;flex-direction:column;background:
+    radial-gradient(ellipse at 50% -10%, rgba(255,46,136,0.14), transparent 60%),
+    radial-gradient(ellipse at 90% 10%, rgba(47,243,224,0.10), transparent 55%),
+    var(--void);
+  }
+  .marquee-font{font-family:'Bebas Neue',cursive;letter-spacing:2px;}
+  .mono{font-family:'Space Mono',monospace;}
+  #toast-wrap{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
+  .toast{background:var(--void-2);border:1px solid var(--danger);color:var(--text);font-size:13px;padding:9px 16px;border-radius:9px;box-shadow:0 4px 14px rgba(0,0,0,0.5);animation:toastin .2s ease-out;}
+  @keyframes toastin{from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)}}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;
+    background:linear-gradient(180deg, rgba(21,12,30,0.95), rgba(11,7,16,0.95));
+    border-bottom:2px solid var(--gold); box-shadow:0 2px 18px rgba(255,46,136,0.15); z-index:5; flex-shrink:0;flex-wrap:wrap;gap:8px;}
+  .logo{font-family:'Bebas Neue';font-size:26px; color:var(--gold-bright); text-shadow:0 0 8px rgba(244,217,118,0.6), 0 0 18px rgba(255,46,136,0.35); display:flex; align-items:center; gap:10px;}
+  .logo .dot{width:8px;height:8px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink);animation:pulse 1.6s infinite ease-in-out;}
+  @keyframes pulse{0%,100%{opacity:1} 50%{opacity:.35}}
+  .wallet{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .chip-badge{display:flex;align-items:center;gap:8px;background:var(--void-2);border:1px solid var(--gold);border-radius:999px;padding:6px 14px;font-family:'Space Mono',monospace;font-weight:700;font-size:15px;color:var(--gold-bright);}
+  .chip-icon{width:16px;height:16px;border-radius:50%;background:conic-gradient(var(--pink) 0 25%, var(--gold) 0 50%, var(--cyan) 0 75%, var(--pink) 0 100%);border:1px solid #fff3;}
+  .name-tag{font-size:13px;color:var(--text-dim);}
+  .tabbtn{background:none;border:1px solid var(--felt-line);color:var(--text-dim);padding:7px 14px;border-radius:8px;font-family:'Inter';font-weight:600;font-size:13px;cursor:pointer;transition:.15s;}
+  .tabbtn.active{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 0 12px rgba(255,46,136,0.5);}
+  .tabbtn:hover{border-color:var(--gold);}
+
+  .body-wrap{flex:1;display:flex;min-height:0;}
+  main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;}
+  aside{width:300px;flex-shrink:0;border-left:2px solid var(--gold);background:rgba(11,7,16,0.85);display:flex;flex-direction:column;min-height:0;}
+  @media (max-width:860px){ aside{position:fixed;right:0;top:0;bottom:0;transform:translateX(100%);transition:transform .25s; z-index:20;width:86%;} aside.open{transform:translateX(0);} }
+
+  .table-scene{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 16px 8px;overflow-y:auto;}
+  .felt{width:min(920px,97%);border-radius:220px 220px 24px 24px;background:
+      radial-gradient(ellipse at 50% 12%, var(--felt) 0%, var(--felt-dark) 78%);
+      border:6px solid var(--gold); box-shadow: inset 0 0 60px rgba(0,0,0,0.6), 0 10px 40px rgba(0,0,0,0.6);
+      padding:22px 26px 30px; position:relative; min-height:520px;}
+  .felt::before{content:'VANTAGE ROW';position:absolute;top:212px;left:50%;transform:translateX(-50%);
+      font-family:'Bebas Neue';font-size:18px;letter-spacing:6px;color:var(--felt-line);pointer-events:none;z-index:0;}
+  .dealer-zone, .seats-row{position:relative;z-index:1;}
+  .table-msg{text-align:center;font-family:'Space Mono';font-size:13px;color:var(--cyan);margin-top:2px;min-height:18px;}
+  .dealer-zone{display:flex;flex-direction:column;align-items:center;padding-top:12px;min-height:150px;}
+  .zone-label{font-family:'Bebas Neue';letter-spacing:3px;color:var(--gold-bright);font-size:14px;margin-bottom:6px;text-shadow:0 0 8px rgba(0,0,0,0.6);}
+  .hand{display:flex;justify-content:center;min-height:96px;}
+  .card{width:56px;height:82px;border-radius:8px;background:#fff;color:#111;display:flex;flex-direction:column;justify-content:space-between;padding:5px 6px;font-weight:700;font-family:'Space Mono',monospace;font-size:14px;box-shadow:0 4px 10px rgba(0,0,0,0.5);margin-left:-16px;border:1px solid #0002;animation:deal .25s ease-out;flex-shrink:0;}
+  .card:first-child{margin-left:0;}
+  .card.red{color:#c31432;}
+  .card.back{background:repeating-linear-gradient(45deg, var(--pink), var(--pink) 4px, var(--cyan) 4px, var(--cyan) 8px); }
+  @keyframes deal{from{transform:translateY(-20px) scale(.8);opacity:0} to{transform:translateY(0) scale(1);opacity:1}}
+  .hand-total{margin-top:6px;font-family:'Space Mono';font-size:13px;color:var(--gold-bright);background:#0007;padding:2px 9px;border-radius:6px;}
+
+  .seats-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px;}
+  .seat{background:rgba(0,0,0,0.28);border:1px solid var(--felt-line);border-radius:14px;padding:12px 12px;min-width:140px;max-width:150px;text-align:center;position:relative;}
+  .seat.me{border-color:var(--cyan);box-shadow:0 0 14px rgba(47,243,224,0.25);}
+  .seat.turn{border-color:var(--gold-bright);box-shadow:0 0 16px rgba(244,217,118,0.55);}
+  .seat.empty{opacity:.55;border-style:dashed;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:90px;}
+  .seat.empty:hover{opacity:.9;border-color:var(--gold);}
+  .seat .pname{font-weight:700;font-size:13px;color:var(--text);margin-bottom:4px;}
+  .seat .pbet{font-family:'Space Mono';font-size:12px;color:var(--gold-bright);}
+  .seat .status-pill{position:absolute;top:-10px;right:6px;font-size:9px;padding:2px 7px;border-radius:999px;font-weight:700;letter-spacing:.5px;}
+  .status-pill.stand{background:var(--cyan);color:#052;}
+  .status-pill.bust{background:var(--danger);color:#fff;}
+  .status-pill.blackjack{background:var(--gold);color:#301;}
+  .status-pill.win{background:var(--good);color:#052;}
+  .status-pill.lose{background:var(--danger);color:#fff;}
+  .status-pill.push{background:#888;color:#fff;}
+  .status-pill.active{background:var(--pink);color:#fff;}
+  .turn-flag{font-family:'Space Mono';font-size:10px;color:var(--gold-bright);margin-top:4px;}
+
+  .controls-bar{width:min(920px,97%);margin:14px auto 20px;background:var(--void-2);border:1px solid var(--gold);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .btn{border:none;border-radius:9px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Inter';transition:.15s;}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .btn-gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#241000;box-shadow:0 3px 0 #8a6d1c;}
+  .btn-gold:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #8a6d1c;}
+  .btn-pink{background:var(--pink);color:#fff;box-shadow:0 3px 0 #a0195b;}
+  .btn-pink:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #a0195b;}
+  .btn-ghost{background:transparent;border:1px solid var(--felt-line);color:var(--text);}
+  .chip-select{display:flex;gap:6px;}
+  .chip-select button{width:42px;height:42px;border-radius:50%;border:2px solid var(--gold);background:var(--void);color:var(--gold-bright);font-family:'Space Mono';font-weight:700;font-size:11px;cursor:pointer;transition:.15s;}
+  .chip-select button.selected{background:var(--gold);color:#241000;box-shadow:0 0 12px rgba(244,217,118,0.7);transform:scale(1.08);}
+  .bet-amount{font-family:'Space Mono';font-size:20px;color:var(--gold-bright);min-width:70px;text-align:center;}
+  .custom-bet-input{width:90px;background:var(--void);border:1px solid var(--gold);border-radius:9px;color:var(--text);padding:9px 10px;font-family:'Space Mono';font-size:14px;text-align:center;}
+  .custom-bet-input:focus{outline:none;border-color:var(--cyan);}
+  .empty-note{color:var(--text-dim);font-size:13px;text-align:center;margin-top:40px;}
+
+  .chat-head{padding:12px 14px;border-bottom:1px solid var(--felt-line);font-family:'Bebas Neue';letter-spacing:2px;color:var(--gold-bright);font-size:15px;display:flex;justify-content:space-between;align-items:center;}
+  .chat-log{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+  .msg{font-size:13px;line-height:1.4;}
+  .msg .who{color:var(--cyan);font-weight:700;margin-right:5px;}
+  .msg .who.system{color:var(--gold);}
+  .msg .txt{color:var(--text);word-wrap:break-word;}
+  .msg .ts{color:#665;font-size:10px;margin-left:5px;}
+  .chat-input-row{display:flex;gap:6px;padding:10px;border-top:1px solid var(--felt-line);}
+  .chat-input-row input{flex:1;background:var(--void);border:1px solid var(--felt-line);border-radius:8px;color:var(--text);padding:9px 10px;font-size:13px;}
+  .chat-input-row input:focus{outline:none;border-color:var(--cyan);}
+  .chat-send{background:var(--cyan);border:none;border-radius:8px;color:#042;padding:0 14px;font-weight:700;cursor:pointer;}
+  .close-chat{display:none;background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;}
+  @media (max-width:860px){ .close-chat{display:block;} }
+
+  .wheel-view{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:20px;}
+  .wheel-wrap{position:relative;width:280px;height:280px;}
+  .wheel-pointer{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:22px solid var(--gold-bright);z-index:3;filter:drop-shadow(0 0 6px rgba(244,217,118,0.8));}
+  #wheelSvg{width:100%;height:100%;border-radius:50%;border:6px solid var(--gold);box-shadow:0 0 40px rgba(255,46,136,0.35), inset 0 0 20px rgba(0,0,0,0.5);transition:transform 4.2s cubic-bezier(.17,.67,.16,1.01);background:var(--void-2);}
+  .wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:radial-gradient(var(--gold-bright),var(--gold));border:2px solid #fff5;z-index:2;}
+  .wheel-status{font-family:'Space Mono';color:var(--text-dim);font-size:14px;text-align:center;}
+  .wheel-result{font-family:'Bebas Neue';font-size:30px;color:var(--gold-bright);text-shadow:0 0 14px rgba(244,217,118,0.7);}
+
+  .gate{position:fixed;inset:0;background:var(--void);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .gate-card{background:var(--void-2);border:2px solid var(--gold);border-radius:16px;padding:36px 34px;width:min(360px,90%);text-align:center;box-shadow:0 0 50px rgba(255,46,136,0.2);}
+  .gate-card h1{font-family:'Bebas Neue';font-size:34px;color:var(--gold-bright);margin:0 0 4px;letter-spacing:3px;text-shadow:0 0 12px rgba(255,46,136,0.4);}
+  .gate-card p{color:var(--text-dim);font-size:13px;margin:0 0 22px;}
+  .gate-card input{width:100%;background:var(--void);border:1px solid var(--felt-line);border-radius:9px;color:var(--text);padding:12px;font-size:15px;text-align:center;margin-bottom:14px;}
+  .gate-card input:focus{outline:none;border-color:var(--cyan);}
+
+  .setup-card{background:var(--void-2);border:2px solid var(--pink);border-radius:16px;padding:32px;width:min(560px,92%);text-align:left;box-shadow:0 0 50px rgba(255,46,136,0.25);}
+  .setup-card h1{font-family:'Bebas Neue';font-size:28px;color:var(--gold-bright);margin:0 0 14px;letter-spacing:2px;}
+  .setup-card ol{color:var(--text-dim);font-size:14px;line-height:1.8;padding-left:20px;}
+  .setup-card code{background:var(--void);color:var(--cyan);padding:2px 6px;border-radius:4px;font-family:'Space Mono';font-size:12px;}
+  .setup-card a{color:var(--cyan);}
+
+  .mobile-chat-toggle{display:none;}
+  @media (max-width:860px){ .mobile-chat-toggle{display:block;} }
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--felt-line);border-radius:4px;}
+</style>
+</head>
+<body>
+<div id="toast-wrap"></div>
+<div id="app"></div>
+<script>
+(function(){
+
+/* =====================================================================
+   ONE-TIME SETUP — do this before deploying to GitHub Pages:
+   1. Go to https://console.firebase.google.com and create a free project.
+   2. In the left menu: Build > Realtime Database > Create Database >
+      start in "Test mode" (fine for a casual friends game with play chips).
+   3. Project settings (gear icon) > General > "Your apps" > Web app (</>)
+      > register an app > copy the firebaseConfig object it gives you.
+   4. Paste those values into FIREBASE_CONFIG below, replacing the
+      placeholders. Save this file, commit, and push to GitHub Pages.
+   No player ever needs to sign in to anything — this config is only
+   used to point the page at your free database.
+===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCgOhIesPLTyUxpWf_gjdfyB-sNTM4kYnA",
+  authDomain: "vantage-row-casino.firebaseapp.com",
+  databaseURL: "https://vantage-row-casino-default-rtdb.firebaseio.com",
+  projectId: "vantage-row-casino"
+};
+
+/* ===================== CONSTANTS ===================== */
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const SUITS = ['♠','♥','♦','♣'];
+const SEAT_COUNT = 5;
+const CHIP_VALUES = [25,100,250,500];
+const STARTING_CHIPS = 1000;
+const WHEEL_SEGMENTS = [50,100,150,75,500,25,200,1000,50,100,250,75];
+const AFK_MS = 45000;
+const NAME_KEY = 'vantage-row-name';
+
+/* ===================== STATE ===================== */
+let S = {
+  myName:null, myChips:0, view:'table',
+  table:null, chat:[], spinning:false, lastSpinDate:null, lastReward:null, chatOpenMobile:false,
+  _shellBuilt:false, _builtView:null, _sig:{dealer:null, msg:null, seats:null, controls:null}
+};
+let db = null;
+
+/* ===================== TOASTS ===================== */
+function toast(msg){
+  const wrap = document.getElementById('toast-wrap');
+  if(!wrap) return;
+  const el = document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 4000);
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* ===================== FIREBASE HELPERS ===================== */
+function firebaseConfigured(){ return FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey!=='YOUR_API_KEY'; }
+function initFirebase(){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+}
+async function fbGet(path){
+  try{ const snap = await db.ref(path).once('value'); return snap.exists() ? snap.val() : null; }
+  catch(e){ console.error('get failed', path, e); toast('Connection hiccup — retrying...'); return null; }
+}
+async function fbSet(path, value){
+  try{ await db.ref(path).set(value); return true; }
+  catch(e){ console.error('set failed', path, e); toast('Connection hiccup — retrying...'); return false; }
+}
+function fbListen(path, cb){
+  db.ref(path).on('value', snap=>cb(snap.exists()?snap.val():null), err=>{ console.error('listen failed', path, err); toast('Connection hiccup — retrying...'); });
+}
+async function fbTransaction(path, mutator){
+  try{ const res = await db.ref(path).transaction(mutator); return res; }
+  catch(e){ console.error('transaction failed', path, e); toast('Connection hiccup — retrying...'); return {committed:false, snapshot:null}; }
+}
+async function tableTransaction(mutator){
+  const res = await fbTransaction('table', current=>{
+    const t = current || freshTable();
+    const ok = mutator(t);
+    if(ok===false) return undefined;
+    return t;
+  });
+  return (res.committed && res.snapshot) ? res.snapshot.val() : null;
+}
+
+/* ===================== CARD LOGIC ===================== */
+function freshDeck(){
+  const d=[];
+  for(const s of SUITS) for(const r of RANKS) d.push({r,s});
+  for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
+  return d;
+}
+function cardValue(r){ if(r==='A') return 11; if(['K','Q','J'].includes(r)) return 10; return parseInt(r,10); }
+function handTotal(cards){
+  let total=cards.reduce((s,c)=>s+cardValue(c.r),0);
+  let aces=cards.filter(c=>c.r==='A').length;
+  while(total>21 && aces>0){ total-=10; aces--; }
+  return total;
+}
+function isNaturalBJ(cards){ return cards.length===2 && handTotal(cards)===21; }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cardHtml(c,hidden){ if(hidden) return '<div class="card back"></div>'; const red=c.s==='♥'||c.s==='♦'; return '<div class="card'+(red?' red':'')+'"><div>'+c.r+'</div><div style="text-align:right">'+c.s+'</div></div>'; }
+
+/* ===================== TABLE STATE HELPERS ===================== */
+function freshTable(){
+  return { phase:'betting', seats:Array(SEAT_COUNT).fill(null), dealerHand:[], deck:[], turnIndex:-1, turnStartedAt:0, roundId:0, message:'Grab a seat and place your bet.' };
+}
+function seatName(t,i){ return t.seats[i] ? t.seats[i].name : ''; }
+function firstOpenTurn(t, fromIdx){
+  for(let i=fromIdx+1;i<t.seats.length;i++){
+    const s=t.seats[i];
+    if(s && s.bet>0 && s.status==='active') return i;
+  }
+  return -1;
+}
+function activeBettors(t){ return t.seats.map((s,i)=>({s,i})).filter(x=>x.s && x.s.bet>0); }
+
+/* ===================== INIT ===================== */
+async function init(){
+  if(!firebaseConfigured()){ renderSetupNeeded(); return; }
+  initFirebase();
+  const saved = localStorage.getItem(NAME_KEY);
+  if(saved) S.myName = saved;
+  render();
+  if(S.myName) await afterLogin();
+  setInterval(()=>{ if(S.table && S.table.phase==='playing') renderTable(); }, 3000);
+}
+async function afterLogin(){
+  const existing = await fbGet('players/'+S.myName);
+  if(existing===null){
+    await fbSet('players/'+S.myName, {chips:STARTING_CHIPS, lastSpinDate:null});
+    await pushChat('system', S.myName+' just walked into the casino.');
+  }
+  fbListen('table', val=>{ S.table = val || freshTable(); renderTable(); });
+  fbListen('chat', val=>{ S.chat = val || []; renderChat(); });
+  fbListen('players/'+S.myName, val=>{
+    const profile = val || {chips:STARTING_CHIPS, lastSpinDate:null};
+    S.myChips = profile.chips;
+    S.lastSpinDate = profile.lastSpinDate;
+    updateHeader();
+  });
+}
+
+/* ===================== CHAT ===================== */
+async function pushChat(who, text){
+  await fbTransaction('chat', cur=>{
+    const arr = cur || [];
+    arr.push({who, text, ts:Date.now()});
+    return arr.length>60 ? arr.slice(-60) : arr;
+  });
+}
+async function sendChat(text){
+  text=text.trim(); if(!text) return;
+  await pushChat(S.myName, text);
+}
+
+/* ===================== SEAT / BET ===================== */
+async function sitDown(idx){
+  await tableTransaction(t=>{
+    if(t.seats.some(s=>s && s.name===S.myName)) return false;
+    if(t.seats[idx]) return false;
+    t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null};
+    return true;
+  });
+}
+async function standUp(){
+  await tableTransaction(t=>{
+    if(t.phase!=='betting') return false;
+    const idx = t.seats.findIndex(s=>s && s.name===S.myName);
+    if(idx===-1) return false;
+    t.seats[idx]=null;
+    return true;
+  });
+}
+async function placeBet(amount){
+  if(amount<=0) return;
+  const t = await fbGet('table');
+  if(!t || t.phase!=='betting') return;
+  const idx = t.seats.findIndex(s=>s && s.name===S.myName);
+  if(idx===-1) return;
+  const currentBet = t.seats[idx].bet || 0;
+  const res = await fbTransaction('players/'+S.myName+'/chips', cur=>{
+    const chips = cur==null ? STARTING_CHIPS : cur;
+    const available = chips + currentBet;
+    if(amount>available) return; // abort — insufficient funds
+    return available - amount;
+  });
+  if(!res.committed) return;
+  await tableTransaction(tt=>{
+    const i = tt.seats.findIndex(s=>s && s.name===S.myName);
+    if(i===-1) return false;
+    tt.seats[i].bet = amount;
+    return true;
+  });
+}
+
+/* ===================== ROUND FLOW ===================== */
+async function dealRound(){
+  const committed = await tableTransaction(t=>{
+    if(t.phase!=='betting') return false;
+    const bettors = activeBettors(t);
+    if(bettors.length===0) return false;
+    const deck = freshDeck();
+    let ptr=0;
+    bettors.forEach(({i})=>{ t.seats[i].hand=[deck[ptr++],deck[ptr++]]; t.seats[i].status='active'; });
+    t.dealerHand = [deck[ptr++], deck[ptr++]];
+    t.deck = deck.slice(ptr);
+    bettors.forEach(({i})=>{ if(isNaturalBJ(t.seats[i].hand)) t.seats[i].status='blackjack'; });
+    t.phase='playing';
+    t.turnIndex = firstOpenTurn(t, -1);
+    t.turnStartedAt = Date.now();
+    t.roundId = (t.roundId||0)+1;
+    t.message = t.turnIndex>=0 ? seatName(t,t.turnIndex)+"'s turn" : 'Dealer is playing...';
+    return true;
+  });
+  if(committed && committed.phase==='playing' && committed.turnIndex===-1) await dealerPlayAndSettle();
+}
+async function hitCurrent(){
+  const committed = await tableTransaction(t=>{
+    const idx = t.turnIndex;
+    if(idx<0 || !t.seats[idx] || t.seats[idx].name!==S.myName || t.phase!=='playing') return false;
+    const card = t.deck.shift();
+    t.seats[idx].hand.push(card);
+    const total = handTotal(t.seats[idx].hand);
+    if(total>21) t.seats[idx].status='bust';
+    else if(total===21) t.seats[idx].status='stand';
+    if(t.seats[idx].status!=='active'){
+      const next = firstOpenTurn(t, idx);
+      t.turnIndex = next;
+      t.turnStartedAt = Date.now();
+      t.message = next>=0 ? seatName(t,next)+"'s turn" : 'Dealer is playing...';
+    }
+    return true;
+  });
+  if(committed && committed.phase==='playing' && committed.turnIndex===-1) await dealerPlayAndSettle();
+}
+async function standCurrent(){
+  const committed = await tableTransaction(t=>{
+    const idx = t.turnIndex;
+    if(idx<0 || !t.seats[idx] || t.seats[idx].name!==S.myName || t.phase!=='playing') return false;
+    t.seats[idx].status='stand';
+    const next = firstOpenTurn(t, idx);
+    t.turnIndex = next;
+    t.turnStartedAt = Date.now();
+    t.message = next>=0 ? seatName(t,next)+"'s turn" : 'Dealer is playing...';
+    return true;
+  });
+  if(committed && committed.phase==='playing' && committed.turnIndex===-1) await dealerPlayAndSettle();
+}
+async function skipAfk(){
+  const t0 = S.table;
+  if(!t0 || t0.phase!=='playing' || Date.now()-t0.turnStartedAt<AFK_MS) return;
+  const committed = await tableTransaction(t=>{
+    const idx = t.turnIndex;
+    if(idx<0 || t.phase!=='playing') return false;
+    if(Date.now()-t.turnStartedAt < AFK_MS) return false;
+    t.seats[idx].status='stand';
+    const next = firstOpenTurn(t, idx);
+    t.turnIndex = next;
+    t.turnStartedAt = Date.now();
+    t.message = next>=0 ? seatName(t,next)+"'s turn" : 'Dealer is playing...';
+    return true;
+  });
+  if(committed && committed.phase==='playing' && committed.turnIndex===-1) await dealerPlayAndSettle();
+}
+
+async function dealerPlayAndSettle(){
+  const claimed = await tableTransaction(t=>{
+    if(t.phase!=='playing' || t.turnIndex!==-1) return false;
+    t.phase='dealer';
+    return true;
+  });
+  if(!claimed) return;
+  const bettors = activeBettors(claimed);
+  const anyoneLeft = bettors.some(({s})=>s.status!=='bust');
+  let dealerHand = claimed.dealerHand.slice();
+  let deck = claimed.deck.slice();
+  if(anyoneLeft){ while(handTotal(dealerHand)<17){ dealerHand.push(deck.shift()); } }
+  const dTotal = handTotal(dealerHand);
+  const dBJ = isNaturalBJ(dealerHand);
+  const results = {};
+  for(const {s} of bettors){
+    let outcome, payout=0;
+    if(s.status==='bust'){ outcome='lose'; }
+    else if(s.status==='blackjack' && !dBJ){ outcome='win'; payout = s.bet + Math.floor(s.bet*1.5); }
+    else if(s.status==='blackjack' && dBJ){ outcome='push'; payout=s.bet; }
+    else if(dTotal>21){ outcome='win'; payout=s.bet*2; }
+    else if(handTotal(s.hand)>dTotal){ outcome='win'; payout=s.bet*2; }
+    else if(handTotal(s.hand)===dTotal){ outcome='push'; payout=s.bet; }
+    else { outcome='lose'; }
+    results[s.name] = {outcome, payout};
+  }
+  for(const name in results){
+    const {payout} = results[name];
+    if(payout>0){
+      await fbTransaction('players/'+name+'/chips', cur=>(cur==null?STARTING_CHIPS:cur)+payout);
+    }
+  }
+  await tableTransaction(t2=>{
+    if(t2.phase!=='dealer') return false;
+    t2.dealerHand = dealerHand;
+    t2.deck = deck;
+    t2.seats.forEach(s=>{ if(s && results[s.name]) s.result = results[s.name].outcome; });
+    t2.phase='payout';
+    t2.message='Round over — press New Round when ready.';
+    return true;
+  });
+}
+
+async function newRound(){
+  await tableTransaction(t=>{
+    if(t.phase!=='payout' && t.phase!=='betting') return false;
+    t.seats = t.seats.map(s=> s ? {name:s.name, bet:0, hand:[], status:'active', result:null} : null);
+    t.dealerHand=[]; t.deck=[]; t.turnIndex=-1; t.turnStartedAt=0; t.phase='betting';
+    t.message='Grab a seat and place your bet.';
+    return true;
+  });
+}
+
+/* ===================== DAILY WHEEL ===================== */
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+async function spinWheel(){
+  if(S.spinning || S.lastSpinDate===todayStr()) return;
+  S.spinning=true; render();
+  const idx = Math.floor(Math.random()*WHEEL_SEGMENTS.length);
+  const reward = WHEEL_SEGMENTS[idx];
+  const segAngle = 360/WHEEL_SEGMENTS.length;
+  const targetAngle = 360*5 + (360-(idx*segAngle+segAngle/2));
+  const svg = document.getElementById('wheelSvg');
+  if(svg) svg.style.transform = 'rotate('+targetAngle+'deg)';
+  await sleep(4300);
+  const res = await fbTransaction('players/'+S.myName, cur=>{
+    const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null};
+    if(profile.lastSpinDate===todayStr()) return; // already claimed, abort
+    profile.chips = (profile.chips==null?STARTING_CHIPS:profile.chips) + reward;
+    profile.lastSpinDate = todayStr();
+    return profile;
+  });
+  S.spinning=false;
+  if(res.committed){
+    S.lastReward = reward;
+    await pushChat('system', S.myName+' spun the wheel and won '+reward+' chips!');
+  }
+  render();
+}
+
+/* ===================== RENDER ===================== */
+function render(){
+  const app = document.getElementById('app');
+  if(!S.myName){ app.innerHTML = gateHtml(); bindGate(); return; }
+  if(!S._shellBuilt){
+    app.innerHTML = shellHtml();
+    bindShell();
+    S._shellBuilt = true;
+  }
+  updateHeader();
+  renderTable();
+  renderChat();
+}
+function renderSetupNeeded(){
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="gate"><div class="setup-card">' +
+    '<h1>ONE-TIME SETUP NEEDED</h1>' +
+    '<p style="color:var(--text-dim);font-size:14px;">This page needs a free Firebase database to talk to before anyone can play. Nobody who plays needs an account — only you, once:</p>' +
+    '<ol>' +
+    '<li>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> and create a free project.</li>' +
+    '<li>Build → Realtime Database → Create Database → start in <b>Test mode</b>.</li>' +
+    '<li>Project settings → General → "Your apps" → Web app (&lt;/&gt;) → copy the <code>firebaseConfig</code> values.</li>' +
+    '<li>Open <code>index.html</code>, find <code>FIREBASE_CONFIG</code> near the top of the script, and paste your values in.</li>' +
+    '<li>Save, commit, and push — then reload this page.</li>' +
+    '</ol>' +
+    '</div></div>';
+}
+function updateHeader(){
+  document.querySelectorAll('.tabbtn[data-view]').forEach(el=>{
+    el.classList.toggle('active', el.dataset.view===S.view);
+  });
+  const badge = document.querySelector('.chip-badge span:last-child');
+  if(badge) badge.textContent = S.myChips;
+}
+function gateHtml(){
+  return '<div class="gate"><div class="gate-card">' +
+    '<h1>VANTAGE ROW</h1>' +
+    '<p>Pull up a seat. Enter the name your friends will see at the table.</p>' +
+    '<input id="nameInput" maxlength="18" placeholder="Your name" autocomplete="off" />' +
+    '<button class="btn btn-gold" id="enterBtn" style="width:100%">Enter the Casino</button>' +
+    '</div></div>';
+}
+function bindGate(){
+  const btn=document.getElementById('enterBtn'), inp=document.getElementById('nameInput');
+  inp.focus();
+  const go = async ()=>{
+    const v=inp.value.trim(); if(!v) return;
+    S.myName=v.slice(0,18);
+    localStorage.setItem(NAME_KEY, S.myName);
+    render(); await afterLogin();
+  };
+  btn.onclick=go; inp.onkeydown=(e)=>{ if(e.key==='Enter') go(); };
+}
+function shellHtml(){
+  return '<header>' +
+    '<div class="logo"><span class="dot"></span>VANTAGE ROW</div>' +
+    '<div class="wallet">' +
+    '<div class="tabbtn '+(S.view==='table'?'active':'')+'" data-view="table">TABLE</div>' +
+    '<div class="tabbtn '+(S.view==='wheel'?'active':'')+'" data-view="wheel">DAILY SPIN</div>' +
+    '<div class="chip-badge"><span class="chip-icon"></span><span>'+S.myChips+'</span></div>' +
+    '<div class="name-tag">'+esc(S.myName)+'</div>' +
+    '<button class="tabbtn mobile-chat-toggle" id="chatToggle">CHAT</button>' +
+    '</div></header>' +
+    '<div class="body-wrap"><main id="mainView"></main>' +
+    '<aside id="chatPane" class="'+(S.chatOpenMobile?'open':'')+'">' +
+    '<div class="chat-head">TABLE CHAT <button class="close-chat" id="closeChat">✕</button></div>' +
+    '<div class="chat-log" id="chatLog"></div>' +
+    '<div class="chat-input-row"><input id="chatInput" placeholder="Say something..." maxlength="200" autocomplete="off" />' +
+    '<button class="chat-send" id="chatSendBtn">Send</button></div>' +
+    '</aside></div>';
+}
+function bindShell(){
+  document.querySelectorAll('.tabbtn[data-view]').forEach(el=>{ el.onclick=()=>{ S.view=el.dataset.view; renderTable(); updateHeader(); }; });
+  const toggle=document.getElementById('chatToggle');
+  if(toggle) toggle.onclick=()=>{ S.chatOpenMobile=true; document.getElementById('chatPane').classList.add('open'); };
+  const closeChat=document.getElementById('closeChat');
+  if(closeChat) closeChat.onclick=()=>{ S.chatOpenMobile=false; document.getElementById('chatPane').classList.remove('open'); };
+  const sendBtn=document.getElementById('chatSendBtn'), input=document.getElementById('chatInput');
+  sendBtn.onclick=()=>{ sendChat(input.value); input.value=''; input.focus(); };
+  input.onkeydown=(e)=>{ if(e.key==='Enter'){ sendChat(input.value); input.value=''; } };
+}
+function renderChat(){
+  const log=document.getElementById('chatLog'); if(!log) return;
+  const nearBottom = log.scrollTop+log.clientHeight >= log.scrollHeight-40;
+  log.innerHTML = S.chat.map(m=>{
+    const time=new Date(m.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const whoClass = m.who==='system' ? 'who system' : 'who';
+    return '<div class="msg"><span class="'+whoClass+'">'+esc(m.who==='system'?'⚡':m.who)+'</span><span class="txt">'+esc(m.text)+'</span><span class="ts">'+time+'</span></div>';
+  }).join('');
+  if(nearBottom) log.scrollTop = log.scrollHeight;
+}
+
+function renderTable(){
+  const main=document.getElementById('mainView'); if(!main) return;
+
+  if(S.view==='wheel'){
+    if(S._builtView!=='wheel'){
+      main.innerHTML = wheelHtml();
+      bindWheel();
+      S._builtView='wheel';
+    } else if(!S.spinning){
+      updateWheelStatus();
+    }
+    return;
+  }
+
+  if(S._builtView!=='table'){
+    main.innerHTML = '<div class="table-scene" id="tableScene"><div class="felt">' +
+      '<div id="dealerZone" class="dealer-zone"></div>' +
+      '<div class="table-msg" id="tableMsgEl"></div>' +
+      '<div class="seats-row" id="seatsRow"></div>' +
+      '</div><div id="controlsBar"></div></div>';
+    S._builtView='table';
+    S._sig = {dealer:null, msg:null, seats:null, controls:null};
+  }
+
+  const t = S.table || freshTable();
+  const mySeatIdx = t.seats.findIndex(s=>s && s.name===S.myName);
+
+  const dealerSig = JSON.stringify(t.dealerHand)+'|'+t.phase;
+  if(S._sig.dealer!==dealerSig){
+    const showHole = t.phase==='playing';
+    const dCardsHtml = (t.dealerHand||[]).map((c,i)=>cardHtml(c, showHole && i===1)).join('');
+    const dTotalHtml = showHole ? '' : '<div class="hand-total">'+handTotal(t.dealerHand||[])+'</div>';
+    document.getElementById('dealerZone').innerHTML = '<div class="zone-label">DEALER</div><div class="hand">'+dCardsHtml+'</div>'+dTotalHtml;
+    S._sig.dealer = dealerSig;
+  }
+
+  if(S._sig.msg!==t.message){
+    document.getElementById('tableMsgEl').textContent = t.message||'';
+    S._sig.msg = t.message;
+  }
+
+  const seatsSig = JSON.stringify(t.seats)+'|'+t.turnIndex+'|'+t.phase;
+  if(S._sig.seats!==seatsSig){
+    const seatsHtml = t.seats.map((s,i)=>{
+      if(!s){ return '<div class="seat empty" data-sit="'+i+'">+ Sit Here</div>'; }
+      const isMe = s.name===S.myName;
+      const isTurn = t.phase==='playing' && t.turnIndex===i;
+      const cardsHtml = s.hand.map(c=>cardHtml(c,false)).join('');
+      let pillClass = s.status, pillLabel = s.status.toUpperCase();
+      if(s.result){ pillClass=s.result; pillLabel=s.result.toUpperCase(); }
+      return '<div class="seat '+(isMe?'me':'')+' '+(isTurn?'turn':'')+'">' +
+        '<div class="status-pill '+pillClass+'">'+pillLabel+'</div>' +
+        '<div class="pname">'+esc(s.name)+(isMe?' (you)':'')+'</div>' +
+        '<div class="hand" style="min-height:60px;transform:scale(0.8)">'+cardsHtml+'</div>' +
+        (s.hand.length?'<div class="hand-total">'+handTotal(s.hand)+'</div>':'') +
+        '<div class="pbet">Bet: '+s.bet+'</div>' +
+        (isTurn?'<div class="turn-flag">◀ ACTING</div>':'') +
+        '</div>';
+    }).join('');
+    const seatsRow = document.getElementById('seatsRow');
+    seatsRow.innerHTML = seatsHtml;
+    seatsRow.querySelectorAll('[data-sit]').forEach(el=>{ el.onclick=()=>sitDown(parseInt(el.dataset.sit,10)); });
+    S._sig.seats = seatsSig;
+  }
+
+  const afkReady = t.phase==='playing' && (Date.now()-t.turnStartedAt > AFK_MS);
+  const controlsSig = t.phase+'|'+mySeatIdx+'|'+(mySeatIdx>=0?t.seats[mySeatIdx].bet:'')+'|'+t.turnIndex+'|'+afkReady+'|'+S.myChips;
+  if(S._sig.controls!==controlsSig){
+    let controlsHtml;
+    if(t.phase==='betting'){
+      if(mySeatIdx===-1){
+        controlsHtml = '<div class="controls-bar"><div class="empty-note" style="margin:0">Pick an empty seat at the table to join the hand.</div></div>';
+      } else {
+        const chips = CHIP_VALUES.map(v=>'<button data-val="'+v+'" class="'+(t.seats[mySeatIdx].bet===v?'selected':'')+'">'+v+'</button>').join('');
+        const canDeal = activeBettors(t).length>0;
+        controlsHtml = '<div class="controls-bar">' +
+          '<div class="chip-select" id="chipSelect">'+chips+'</div>' +
+          '<input type="number" min="1" step="1" class="custom-bet-input" id="customBetInput" placeholder="Amount" />' +
+          '<button class="btn btn-ghost" id="customBetBtn">Bet</button>' +
+          '<div class="bet-amount">'+t.seats[mySeatIdx].bet+'</div>' +
+          '<button class="btn btn-ghost" id="standUpBtn">Leave Seat</button>' +
+          '<button class="btn btn-gold" id="dealBtn" '+(canDeal?'':'disabled')+'>Deal Cards</button>' +
+          '</div>';
+      }
+    } else if(t.phase==='playing'){
+      const mine = mySeatIdx>=0 ? t.seats[mySeatIdx] : null;
+      const isMyTurn = mine && t.turnIndex===mySeatIdx;
+      controlsHtml = '<div class="controls-bar">' +
+        '<button class="btn btn-gold" id="hitBtn" '+(isMyTurn?'':'disabled')+'>Hit</button>' +
+        '<button class="btn btn-pink" id="standBtn" '+(isMyTurn?'':'disabled')+'>Stand</button>' +
+        ((!isMyTurn && afkReady) ? '<button class="btn btn-ghost" id="skipBtn">Skip AFK Player</button>' : '') +
+        '</div>';
+    } else if(t.phase==='dealer'){
+      controlsHtml = '<div class="controls-bar"><div class="empty-note" style="margin:0">Dealer is playing...</div></div>';
+    } else {
+      controlsHtml = '<div class="controls-bar"><button class="btn btn-gold" id="newRoundBtn">New Round</button></div>';
+    }
+    const bar = document.getElementById('controlsBar');
+    bar.innerHTML = controlsHtml;
+    const chipSelect=document.getElementById('chipSelect');
+    if(chipSelect) chipSelect.querySelectorAll('button').forEach(b=>{ b.onclick=()=>placeBet(parseInt(b.dataset.val,10)); });
+    const customBetInput=document.getElementById('customBetInput'), customBetBtn=document.getElementById('customBetBtn');
+    if(customBetBtn){
+      const submitCustom=()=>{
+        const val=parseInt(customBetInput.value,10);
+        if(val>0){ placeBet(val); customBetInput.value=''; }
+      };
+      customBetBtn.onclick=submitCustom;
+      customBetInput.onkeydown=(e)=>{ if(e.key==='Enter') submitCustom(); };
+    }
+    const standUpBtn=document.getElementById('standUpBtn'); if(standUpBtn) standUpBtn.onclick=standUp;
+    const dealBtn=document.getElementById('dealBtn'); if(dealBtn) dealBtn.onclick=dealRound;
+    const hitBtn=document.getElementById('hitBtn'); if(hitBtn) hitBtn.onclick=hitCurrent;
+    const standBtn=document.getElementById('standBtn'); if(standBtn) standBtn.onclick=standCurrent;
+    const skipBtn=document.getElementById('skipBtn'); if(skipBtn) skipBtn.onclick=skipAfk;
+    const newRoundBtn=document.getElementById('newRoundBtn'); if(newRoundBtn) newRoundBtn.onclick=newRound;
+    S._sig.controls = controlsSig;
+  }
+}
+function updateWheelStatus(){
+  const canSpin = S.lastSpinDate!==todayStr() && !S.spinning;
+  const statusEl = document.querySelector('.wheel-status');
+  if(statusEl) statusEl.textContent = S.spinning ? 'Spinning...' : (canSpin ? 'Your daily spin is ready!' : 'Come back tomorrow for another spin.');
+  const btn = document.getElementById('spinBtn');
+  if(btn){ btn.disabled = !canSpin; btn.textContent = canSpin?'SPIN THE WHEEL':'ALREADY CLAIMED TODAY'; }
+  const shouldShowResult = (!S.spinning && S.lastReward && S.lastSpinDate===todayStr());
+  let resultEl = document.querySelector('.wheel-result');
+  if(shouldShowResult && !resultEl && statusEl){
+    resultEl = document.createElement('div');
+    resultEl.className='wheel-result';
+    statusEl.insertAdjacentElement('afterend', resultEl);
+  }
+  if(resultEl) resultEl.textContent = shouldShowResult ? ('+'+S.lastReward+' chips!') : '';
+}
+function wheelHtml(){
+  const canSpin = S.lastSpinDate!==todayStr() && !S.spinning;
+  const segAngle = 360/WHEEL_SEGMENTS.length;
+  let paths='';
+  const colors=['#ff2e88','#2ff3e0','#d4af37'];
+  WHEEL_SEGMENTS.forEach((val,i)=>{
+    const start=i*segAngle, end=start+segAngle;
+    const x1=150+140*Math.cos(Math.PI*(start-90)/180), y1=150+140*Math.sin(Math.PI*(start-90)/180);
+    const x2=150+140*Math.cos(Math.PI*(end-90)/180), y2=150+140*Math.sin(Math.PI*(end-90)/180);
+    const mid=(start+end)/2, tx=150+95*Math.cos(Math.PI*(mid-90)/180), ty=150+95*Math.sin(Math.PI*(mid-90)/180);
+    paths += '<path d="M150,150 L'+x1+','+y1+' A140,140 0 0,1 '+x2+','+y2+' Z" fill="'+colors[i%colors.length]+'" opacity="0.88" stroke="#0b0710" stroke-width="1.5"/>';
+    paths += '<text x="'+tx+'" y="'+ty+'" fill="#0b0710" font-family="Space Mono" font-weight="700" font-size="14" text-anchor="middle">'+val+'</text>';
+  });
+  const statusText = S.spinning ? 'Spinning...' : (canSpin ? 'Your daily spin is ready!' : 'Come back tomorrow for another spin.');
+  const resultHtml = (!S.spinning && S.lastReward && S.lastSpinDate===todayStr()) ? '<div class="wheel-result">+'+S.lastReward+' chips!</div>' : '';
+  return '<div class="wheel-view">' +
+      '<div class="wheel-wrap"><div class="wheel-pointer"></div><div class="wheel-hub"></div>' +
+      '<svg id="wheelSvg" viewBox="0 0 300 300">'+paths+'</svg></div>' +
+      '<div class="wheel-status">'+statusText+'</div>' +
+      resultHtml +
+      '<button class="btn btn-gold" id="spinBtn" '+(canSpin?'':'disabled')+'>'+(canSpin?'SPIN THE WHEEL':'ALREADY CLAIMED TODAY')+'</button>' +
+      '</div>';
+}
+function bindWheel(){ const btn=document.getElementById('spinBtn'); if(btn) btn.onclick=spinWheel; }
+
+init();
+})();
+</script>
+</body>
+</html>
