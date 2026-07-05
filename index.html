@@ -51,31 +51,30 @@
   @media (max-width:860px){ aside{position:fixed;right:0;top:0;bottom:0;transform:translateX(100%);transition:transform .25s; z-index:20;width:86%;} aside.open{transform:translateX(0);} }
 
   .table-scene{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 16px 8px;overflow-y:auto;}
-  .felt{width:min(920px,97%);aspect-ratio:1536/1024;position:relative;
+  .felt{width:min(1450px,97%);aspect-ratio:1536/1024;position:relative;
       background-image:url('assets/table-bg.png'); background-size:100% 100%; background-position:center;
-      border-radius:14px; box-shadow:0 0 40px rgba(255,46,136,0.18), 0 10px 40px rgba(0,0,0,0.6);
-      overflow:hidden;}
+      border-radius:14px; box-shadow:0 0 40px rgba(255,46,136,0.18), 0 10px 40px rgba(0,0,0,0.6);}
   .dealer-zone{position:absolute; left:50%; top:68%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; z-index:2;}
   .table-msg{text-align:center;font-family:'Space Mono';font-size:13px;color:var(--cyan);margin:8px 0 2px;min-height:18px;}
-  .zone-label{font-family:'Bebas Neue';letter-spacing:3px;color:var(--gold-bright);font-size:13px;margin-bottom:4px;text-shadow:0 2px 6px rgba(0,0,0,0.9);}
+  .zone-label{font-family:'Bebas Neue';letter-spacing:3px;color:var(--gold-bright);font-size:20px;margin-bottom:4px;text-shadow:0 2px 6px rgba(0,0,0,0.9);}
   .hand{display:flex;justify-content:center;min-height:70px;}
-  .card{width:44px;height:64px;border-radius:6px;background:#fff;color:#111;display:flex;flex-direction:column;justify-content:space-between;padding:4px 5px;font-weight:700;font-family:'Space Mono',monospace;font-size:12px;box-shadow:0 4px 10px rgba(0,0,0,0.5);margin-left:-14px;border:1px solid #0002;animation:deal .25s ease-out;flex-shrink:0;}
+  .card{width:68px;height:100px;border-radius:9px;background:#fff;color:#111;display:flex;flex-direction:column;justify-content:space-between;padding:6px 7px;font-weight:700;font-family:'Space Mono',monospace;font-size:19px;box-shadow:0 4px 10px rgba(0,0,0,0.5);margin-left:-22px;border:1px solid #0002;animation:deal .25s ease-out;flex-shrink:0;}
   .card:first-child{margin-left:0;}
   .card.red{color:#c31432;}
   .card.back{background:#0000; background-image:url('assets/card-back.png'); background-size:cover; background-position:center; border:none; box-shadow:0 4px 10px rgba(0,0,0,0.5);}
   @keyframes deal{from{transform:translateY(-20px) scale(.8);opacity:0} to{transform:translateY(0) scale(1);opacity:1}}
-  .hand-total{margin-top:4px;font-family:'Space Mono';font-size:12px;color:var(--gold-bright);background:#0009;padding:2px 8px;border-radius:6px;}
+  .hand-total{margin-top:4px;font-family:'Space Mono';font-size:19px;color:var(--gold-bright);background:#0009;padding:4px 12px;border-radius:6px;}
 
   .seats-row{position:absolute; inset:0; z-index:1;}
   .seat{position:absolute; top:44%; transform:translate(-50%,-50%);
-      background:rgba(5,3,8,0.55);border:1px solid var(--felt-line);border-radius:12px;padding:8px 8px;width:clamp(76px, 15vw, 118px);text-align:center;backdrop-filter:blur(1px);}
+      background:rgba(5,3,8,0.55);border:1px solid var(--felt-line);border-radius:12px;padding:11px 11px;width:clamp(115px, 15vw, 185px);text-align:center;backdrop-filter:blur(1px);}
   .seat.me{border-color:var(--cyan);box-shadow:0 0 14px rgba(47,243,224,0.35);}
   .seat.turn{border-color:var(--gold-bright);box-shadow:0 0 16px rgba(244,217,118,0.6);}
   .seat.empty{opacity:.7;border-style:dashed;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:56px;font-size:11px;padding:6px;}
   .seat.empty:hover{opacity:1;border-color:var(--gold);}
-  .seat .pname{font-weight:700;font-size:12px;color:var(--text);margin-bottom:3px;text-shadow:0 1px 3px #000;}
-  .seat .pbet{font-family:'Space Mono';font-size:11px;color:var(--gold-bright);}
-  .seat .status-pill{position:absolute;top:-10px;right:4px;font-size:8px;padding:2px 6px;border-radius:999px;font-weight:700;letter-spacing:.5px;}
+  .seat .pname{font-weight:700;font-size:19px;color:var(--text);margin-bottom:3px;text-shadow:0 1px 3px #000;}
+  .seat .pbet{font-family:'Space Mono';font-size:17px;color:var(--gold-bright);}
+  .seat .status-pill{position:absolute;top:-10px;right:4px;font-size:12px;padding:3px 9px;border-radius:999px;font-weight:700;letter-spacing:.5px;}
   .status-pill.stand{background:var(--cyan);color:#052;}
   .status-pill.bust{background:var(--danger);color:#fff;}
   .status-pill.blackjack{background:var(--gold);color:#301;}
@@ -83,12 +82,16 @@
   .status-pill.lose{background:var(--danger);color:#fff;}
   .status-pill.push{background:#888;color:#fff;}
   .status-pill.active{background:var(--pink);color:#fff;}
-  .turn-flag{font-family:'Space Mono';font-size:9px;color:var(--gold-bright);margin-top:3px;}
+  .turn-flag{font-family:'Space Mono';font-size:14px;color:var(--gold-bright);margin-top:3px;}
   .host-hint{color:var(--gold-bright);font-size:10px;}
   .kick-btn{position:absolute;top:-10px;left:4px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;border:none;font-size:10px;font-weight:700;cursor:pointer;line-height:18px;padding:0;}
+  .seat-title-anchor{position:absolute;top:-8px;transform:translateX(-50%);z-index:3;pointer-events:none;text-align:center;}
+  .seat-title-banner{width:clamp(150px,22vw,240px);}
+  .seat-title-banner img{width:100%;height:auto;display:block;}
+  .seat-title-banner.seat-title-plain{width:auto;display:inline-block;}
   .kick-btn:hover{background:#ff7a7a;}
 
-  .controls-bar{width:min(920px,97%);margin:14px auto 20px;background:var(--void-2);border:1px solid var(--gold);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .controls-bar{width:min(1450px,97%);margin:14px auto 20px;background:var(--void-2);border:1px solid var(--gold);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;}
   .btn{border:none;border-radius:9px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Inter';transition:.15s;}
   .btn:disabled{opacity:.35;cursor:not-allowed;}
   .btn-gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#241000;box-shadow:0 3px 0 #8a6d1c;}
@@ -118,13 +121,37 @@
   .close-chat{display:none;background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;}
   @media (max-width:860px){ .close-chat{display:block;} }
 
-  .wheel-view{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:20px;}
-  .wheel-wrap{position:relative;width:280px;height:280px;}
-  .wheel-pointer{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:22px solid var(--gold-bright);z-index:3;filter:drop-shadow(0 0 6px rgba(244,217,118,0.8));}
-  #wheelSvg{width:100%;height:100%;border-radius:50%;border:6px solid var(--gold);box-shadow:0 0 40px rgba(255,46,136,0.35), inset 0 0 20px rgba(0,0,0,0.5);transition:transform 4.2s cubic-bezier(.17,.67,.16,1.01);background:var(--void-2);}
-  .wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:radial-gradient(var(--gold-bright),var(--gold));border:2px solid #fff5;z-index:2;}
-  .wheel-status{font-family:'Space Mono';color:var(--text-dim);font-size:14px;text-align:center;}
-  .wheel-result{font-family:'Bebas Neue';font-size:30px;color:var(--gold-bright);text-shadow:0 0 14px rgba(244,217,118,0.7);}
+  .wheel-view{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:20px;}
+  .wheel-wrap{position:relative;width:clamp(280px, 42vw, 520px);height:clamp(280px, 42vw, 520px);}
+  .wheel-pointer{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:32px solid var(--gold-bright);z-index:3;filter:drop-shadow(0 0 6px rgba(244,217,118,0.8));}
+  #wheelSvg{width:100%;height:100%;border-radius:50%;border:8px solid var(--gold);box-shadow:0 0 50px rgba(255,46,136,0.35), inset 0 0 24px rgba(0,0,0,0.5);transition:transform 4.2s cubic-bezier(.17,.67,.16,1.01);background:var(--void-2);}
+  .wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:radial-gradient(var(--gold-bright),var(--gold));border:3px solid #fff5;z-index:2;}
+  .wheel-status{font-family:'Space Mono';color:var(--text-dim);font-size:18px;text-align:center;}
+  .wheel-result{font-family:'Bebas Neue';font-size:40px;color:var(--gold-bright);text-shadow:0 0 14px rgba(244,217,118,0.7);}
+
+  .store-view{flex:1;overflow-y:auto;padding:24px 20px 40px;max-width:1200px;margin:0 auto;width:100%;}
+  .store-head{text-align:center;margin-bottom:20px;}
+  .store-subnav{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
+  .store-tab-btn{background:none;border:1px solid var(--felt-line);color:var(--text-dim);padding:8px 18px;border-radius:999px;font-family:'Inter';font-weight:600;font-size:13px;cursor:pointer;transition:.15s;}
+  .store-tab-btn.active{background:var(--gold);border-color:var(--gold);color:#241000;box-shadow:0 0 10px rgba(244,217,118,0.5);}
+  .store-tab-btn:hover{border-color:var(--gold);}
+  .store-coming-soon{text-align:center;padding:60px 20px;}
+  .store-sub{color:var(--text-dim);font-size:13px;margin-top:6px;}
+  .store-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  @media (max-width:900px){ .store-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:640px){ .store-grid{grid-template-columns:1fr;} }
+  .store-item{display:flex;align-items:center;justify-content:space-between;background:var(--void-2);border:1px solid var(--felt-line);border-radius:12px;padding:12px 16px;}
+  .store-item-name{font-weight:600;font-size:14px;color:var(--text);}
+  .title-badge{display:inline-flex;align-items:center;gap:3px;font-family:'Space Mono';font-weight:700;font-size:9px;border-radius:999px;padding:2px 8px 2px 6px;margin-top:3px;letter-spacing:.2px;white-space:nowrap;}
+  .msg .title-badge{margin:0 5px 0 0;vertical-align:middle;}
+  .title-badge.tier-common{background:rgba(150,140,120,0.18);border:1px solid #9c8a6a;color:#cbbfa4;}
+  .title-badge.tier-rare{background:rgba(47,243,224,0.14);border:1px solid var(--cyan);color:var(--cyan);box-shadow:0 0 6px rgba(47,243,224,0.35);}
+  .title-badge.tier-legendary{background:linear-gradient(135deg, rgba(212,175,55,0.25), rgba(255,46,136,0.18));border:1px solid var(--gold-bright);color:var(--gold-bright);box-shadow:0 0 10px rgba(244,217,118,0.55);}
+  .store-item.tier-common{border-left:3px solid #9c8a6a;}
+  .store-item.tier-rare{border-left:3px solid var(--cyan);}
+  .store-item.tier-legendary{border-left:3px solid var(--gold-bright);}
+  .store-item.store-item-card{border-left:none;}
+  .store-card-img{width:clamp(150px,22vw,240px);height:auto;border-radius:6px;display:block;}
 
   .gate{position:fixed;inset:0;background:var(--void);display:flex;align-items:center;justify-content:center;z-index:50;}
   .gate-card{background:var(--void-2);border:2px solid var(--gold);border-radius:16px;padding:36px 34px;width:min(360px,90%);text-align:center;box-shadow:0 0 50px rgba(255,46,136,0.2);}
@@ -179,14 +206,48 @@ const SEAT_COUNT = 5;
 const SEAT_X_PERCENT = [14.0, 32.6, 49.7, 68.0, 85.4];
 const CHIP_VALUES = [25,100,250,500];
 const STARTING_CHIPS = 1000;
-const WHEEL_SEGMENTS = [50,100,150,75,500,25,200,1000,50,100,250,75];
+const TITLE_CATALOG = [
+  {id:'fresh-fish', name:'Fresh Fish', price:500, icon:'🐟', cardImg:'assets/badges/fresh-fish-card.png'},
+  {id:'lucky-devil', name:'Lucky Devil', price:1500, icon:'🍀', cardImg:'assets/badges/lucky-devil-card.png'},
+  {id:'bust-magnet', name:'Bust Magnet', price:2500, icon:'💥', cardImg:'assets/badges/bust-magnet-card.png'},
+  {id:'card-shark', name:'Card Shark', price:3500, icon:'🦈', cardImg:'assets/badges/card-shark-card.png'},
+  {id:'ace-sleeve', name:'Ace Up the Sleeve', price:4500, icon:'🃏', cardImg:'assets/badges/ace-sleeve-card.png'},
+  {id:'high-roller', name:'High Roller', price:5500, icon:'💰', cardImg:'assets/badges/high-roller-card.png'},
+  {id:'cool-hand', name:'Cool Hands', price:6500, icon:'😎', cardImg:'assets/badges/cool-hand-card.png'},
+  {id:'house-favorite', name:'House Favorite', price:7500, icon:'⭐', cardImg:'assets/badges/house-favorite-card.png'},
+  {id:'dealers-nightmare', name:"Dealer's Nightmare", price:8500, icon:'😈', cardImg:'assets/badges/dealers-nightmare-card.png'},
+  {id:'blackjack-baron', name:'Blackjack Baron', price:9500, icon:'👑', cardImg:'assets/badges/blackjack-baron-card.png'},
+  {id:'the-whale', name:'The Whale', price:15000, icon:'🐋', cardImg:'assets/badges/the-whale-card.png'},
+  {id:'vantage-vip', name:'VIP', price:25000, icon:'💎', cardImg:'assets/badges/vantage-vip-card.png'}
+];
+function titleName(id){ const item = TITLE_CATALOG.find(t=>t.id===id); return item ? item.name : ''; }
+function titleTier(price){ return price<4000 ? 'common' : price<10000 ? 'rare' : 'legendary'; }
+function titleBadgeHtml(id){
+  const item = TITLE_CATALOG.find(t=>t.id===id);
+  if(!item) return '';
+  return '<span class="title-badge tier-'+titleTier(item.price)+'">'+item.icon+' '+esc(item.name)+'</span>';
+}
+function seatTitleHtml(id){
+  const item = TITLE_CATALOG.find(t=>t.id===id);
+  if(!item) return '';
+  if(item.cardImg) return '<div class="seat-title-banner"><img src="'+item.cardImg+'" alt="'+esc(item.name)+'" /></div>';
+  return '<div class="seat-title-banner seat-title-plain">'+titleBadgeHtml(id)+'</div>';
+}
+const WHEEL_SEGMENTS = [
+  {type:'chips', value:25}, {type:'chips', value:75}, {type:'chips', value:100},
+  {type:'chips', value:125}, {type:'chips', value:150}, {type:'chips', value:250},
+  {type:'chips', value:500}, {type:'chips', value:1000}, {type:'chips', value:1500},
+  {type:'chips', value:2000}, {type:'chips', value:2500},
+  {type:'spins', value:2}, {type:'spins', value:3}
+];
 const AFK_MS = 45000;
 const NAME_KEY = 'vantage-row-name';
 
 /* ===================== STATE ===================== */
 let S = {
   myName:null, myChips:0, view:'table',
-  table:null, chat:[], spinning:false, lastSpinDate:null, lastReward:null, chatOpenMobile:false,
+  table:null, chat:[], spinning:false, lastSpinDate:null, lastReward:null, lastRewardType:null, chatOpenMobile:false,
+  myTitles:{}, equippedTitle:null, storeTab:'titles', bonusSpins:0,
   _shellBuilt:false, _builtView:null, _sig:{dealer:null, msg:null, seats:null, controls:null}
 };
 let db = null;
@@ -270,7 +331,8 @@ function normalizeTable(raw){
         bet: rs.bet || 0,
         hand: rs.hand || [],
         status: rs.status || 'active',
-        result: rs.result || null
+        result: rs.result || null,
+        title: rs.title || null
       });
     } else {
       seats.push(null);
@@ -319,21 +381,27 @@ async function afterLogin(){
     const profile = val || {chips:STARTING_CHIPS, lastSpinDate:null};
     S.myChips = profile.chips;
     S.lastSpinDate = profile.lastSpinDate;
+    S.bonusSpins = profile.bonusSpins || 0;
+    S.myTitles = profile.titles || {};
+    S.equippedTitle = profile.equippedTitle || null;
     updateHeader();
+    renderTable();
   });
 }
 
 /* ===================== CHAT ===================== */
-async function pushChat(who, text){
+async function pushChat(who, text, title){
   await fbTransaction('chat', cur=>{
     const arr = cur || [];
-    arr.push({who, text, ts:Date.now()});
+    const msg = {who, text, ts:Date.now()};
+    if(title) msg.title = title;
+    arr.push(msg);
     return arr.length>60 ? arr.slice(-60) : arr;
   });
 }
 async function sendChat(text){
   text=text.trim(); if(!text) return;
-  await pushChat(S.myName, text);
+  await pushChat(S.myName, text, S.equippedTitle||null);
 }
 
 /* ===================== SEAT / BET ===================== */
@@ -341,7 +409,7 @@ async function sitDown(idx){
   await tableTransaction(t=>{
     if(t.seats.some(s=>s && s.name===S.myName)) return false;
     if(t.seats[idx]) return false;
-    t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null};
+    t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null, title:S.equippedTitle||null};
     return true;
   });
 }
@@ -515,36 +583,89 @@ async function dealerPlayAndSettle(){
 async function newRound(){
   await tableTransaction(t=>{
     if(t.phase!=='payout' && t.phase!=='betting') return false;
-    t.seats = t.seats.map(s=> s ? {name:s.name, bet:0, hand:[], status:'active', result:null} : null);
+    t.seats = t.seats.map(s=> s ? {name:s.name, bet:0, hand:[], status:'active', result:null, title:s.title||null} : null);
     t.dealerHand=[]; t.deck=[]; t.turnIndex=-1; t.turnStartedAt=0; t.phase='betting';
     t.message='Grab a seat and place your bet.';
     return true;
   });
 }
 
+/* ===================== TITLE STORE ===================== */
+async function buyTitle(id){
+  const item = TITLE_CATALOG.find(t=>t.id===id);
+  if(!item) return;
+  if(S.myTitles && S.myTitles[id]) { await equipTitle(id); return; } // already owned, just equip
+  const res = await fbTransaction('players/'+S.myName, cur=>{
+    const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null};
+    const chips = profile.chips==null ? STARTING_CHIPS : profile.chips;
+    if(chips < item.price) return; // abort — insufficient funds
+    const titles = Object.assign({}, profile.titles||{});
+    titles[id] = true;
+    profile.chips = chips - item.price;
+    profile.titles = titles;
+    profile.equippedTitle = id;
+    return profile;
+  });
+  if(res.committed) await syncSeatTitle(id);
+}
+async function equipTitle(id){
+  if(id && !(S.myTitles && S.myTitles[id])) return; // don't equip something not owned
+  await fbTransaction('players/'+S.myName, cur=>{
+    const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null};
+    profile.equippedTitle = id;
+    return profile;
+  });
+  await syncSeatTitle(id);
+}
+async function syncSeatTitle(id){
+  // if currently seated, mirror the equipped title into the live table so others see it update instantly
+  await tableTransaction(t=>{
+    const idx = t.seats.findIndex(s=>s && s.name===S.myName);
+    if(idx===-1) return false;
+    t.seats[idx].title = id || null;
+    return true;
+  });
+}
+
 /* ===================== DAILY WHEEL ===================== */
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+function canSpinNow(){ return !S.spinning && (S.lastSpinDate!==todayStr() || (S.bonusSpins||0)>0); }
 async function spinWheel(){
-  if(S.spinning || S.lastSpinDate===todayStr()) return;
+  if(!canSpinNow()) return;
   S.spinning=true; render();
   const idx = Math.floor(Math.random()*WHEEL_SEGMENTS.length);
-  const reward = WHEEL_SEGMENTS[idx];
+  const seg = WHEEL_SEGMENTS[idx];
   const segAngle = 360/WHEEL_SEGMENTS.length;
   const targetAngle = 360*5 + (360-(idx*segAngle+segAngle/2));
   const svg = document.getElementById('wheelSvg');
   if(svg) svg.style.transform = 'rotate('+targetAngle+'deg)';
   await sleep(4300);
+  const today = todayStr();
   const res = await fbTransaction('players/'+S.myName, cur=>{
-    const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null};
-    if(profile.lastSpinDate===todayStr()) return; // already claimed, abort
-    profile.chips = (profile.chips==null?STARTING_CHIPS:profile.chips) + reward;
-    profile.lastSpinDate = todayStr();
+    const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null, bonusSpins:0};
+    const alreadySpunToday = profile.lastSpinDate===today;
+    const bonus = profile.bonusSpins||0;
+    if(alreadySpunToday){
+      if(bonus<=0) return; // no spins available, abort
+      profile.bonusSpins = bonus - 1;
+    } else {
+      profile.lastSpinDate = today;
+    }
+    if(seg.type==='chips'){
+      profile.chips = (profile.chips==null?STARTING_CHIPS:profile.chips) + seg.value;
+    } else {
+      profile.bonusSpins = (profile.bonusSpins||0) + seg.value;
+    }
     return profile;
   });
   S.spinning=false;
   if(res.committed){
-    S.lastReward = reward;
-    await pushChat('system', S.myName+' spun the wheel and won '+reward+' chips!');
+    S.lastRewardType = seg.type;
+    S.lastReward = seg.value;
+    const rewardText = seg.type==='chips'
+      ? ('won '+seg.value+' chips')
+      : ('won '+seg.value+' bonus spin'+(seg.value>1?'s':''));
+    await pushChat('system', S.myName+' spun the wheel and '+rewardText+'!');
   }
   render();
 }
@@ -608,6 +729,7 @@ function shellHtml(){
     '<div class="wallet">' +
     '<div class="tabbtn '+(S.view==='table'?'active':'')+'" data-view="table">TABLE</div>' +
     '<div class="tabbtn '+(S.view==='wheel'?'active':'')+'" data-view="wheel">DAILY SPIN</div>' +
+    '<div class="tabbtn '+(S.view==='store'?'active':'')+'" data-view="store">STORE</div>' +
     '<div class="chip-badge"><span class="chip-icon"></span><span>'+S.myChips+'</span></div>' +
     '<div class="name-tag">'+esc(S.myName)+'</div>' +
     '<button class="tabbtn mobile-chat-toggle" id="chatToggle">CHAT</button>' +
@@ -636,7 +758,8 @@ function renderChat(){
   log.innerHTML = S.chat.map(m=>{
     const time=new Date(m.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     const whoClass = m.who==='system' ? 'who system' : 'who';
-    return '<div class="msg"><span class="'+whoClass+'">'+esc(m.who==='system'?'⚡':m.who)+'</span><span class="txt">'+esc(m.text)+'</span><span class="ts">'+time+'</span></div>';
+    const badge = m.title ? '<span class="title-badge tier-'+titleTier((TITLE_CATALOG.find(t=>t.id===m.title)||{price:0}).price)+'">['+esc(titleName(m.title))+']</span>' : '';
+    return '<div class="msg">'+badge+'<span class="'+whoClass+'">'+esc(m.who==='system'?'⚡':m.who)+'</span><span class="txt">'+esc(m.text)+'</span><span class="ts">'+time+'</span></div>';
   }).join('');
   if(nearBottom) log.scrollTop = log.scrollHeight;
 }
@@ -652,6 +775,13 @@ function renderTable(){
     } else if(!S.spinning){
       updateWheelStatus();
     }
+    return;
+  }
+
+  if(S.view==='store'){
+    main.innerHTML = storeHtml();
+    bindStore();
+    S._builtView='store';
     return;
   }
 
@@ -705,8 +835,12 @@ function renderTable(){
         (isTurn?'<div class="turn-flag">◀ ACTING</div>':'') +
         '</div>';
     }).join('');
+    const titleBannersHtml = t.seats.map((s,i)=>{
+      if(!s || !s.title) return '';
+      return '<div class="seat-title-anchor" style="left:'+SEAT_X_PERCENT[i]+'%;">'+seatTitleHtml(s.title)+'</div>';
+    }).join('');
     const seatsRow = document.getElementById('seatsRow');
-    seatsRow.innerHTML = seatsHtml;
+    seatsRow.innerHTML = seatsHtml + titleBannersHtml;
     seatsRow.querySelectorAll('[data-sit]').forEach(el=>{ el.onclick=()=>sitDown(parseInt(el.dataset.sit,10)); });
     seatsRow.querySelectorAll('[data-kick]').forEach(el=>{ el.onclick=()=>kickSeat(parseInt(el.dataset.kick,10)); });
     S._sig.seats = seatsSig;
@@ -766,36 +900,46 @@ function renderTable(){
     S._sig.controls = controlsSig;
   }
 }
+function spinStatusText(){
+  if(S.spinning) return 'Spinning...';
+  if(S.lastSpinDate!==todayStr()) return 'Your daily spin is ready!';
+  if((S.bonusSpins||0)>0) return 'You have '+S.bonusSpins+' bonus spin'+(S.bonusSpins>1?'s':'')+' left!';
+  return 'Come back tomorrow for another spin.';
+}
 function updateWheelStatus(){
-  const canSpin = S.lastSpinDate!==todayStr() && !S.spinning;
+  const canSpin = canSpinNow();
   const statusEl = document.querySelector('.wheel-status');
-  if(statusEl) statusEl.textContent = S.spinning ? 'Spinning...' : (canSpin ? 'Your daily spin is ready!' : 'Come back tomorrow for another spin.');
+  if(statusEl) statusEl.textContent = spinStatusText();
   const btn = document.getElementById('spinBtn');
   if(btn){ btn.disabled = !canSpin; btn.textContent = canSpin?'SPIN THE WHEEL':'ALREADY CLAIMED TODAY'; }
-  const shouldShowResult = (!S.spinning && S.lastReward && S.lastSpinDate===todayStr());
+  const shouldShowResult = !S.spinning && S.lastReward && S.lastSpinDate===todayStr();
   let resultEl = document.querySelector('.wheel-result');
   if(shouldShowResult && !resultEl && statusEl){
     resultEl = document.createElement('div');
     resultEl.className='wheel-result';
     statusEl.insertAdjacentElement('afterend', resultEl);
   }
-  if(resultEl) resultEl.textContent = shouldShowResult ? ('+'+S.lastReward+' chips!') : '';
+  if(resultEl) resultEl.textContent = shouldShowResult ? ('+'+S.lastReward+(S.lastRewardType==='spins'?' spin'+(S.lastReward>1?'s':''):' chips')+'!') : '';
 }
 function wheelHtml(){
-  const canSpin = S.lastSpinDate!==todayStr() && !S.spinning;
+  const canSpin = canSpinNow();
   const segAngle = 360/WHEEL_SEGMENTS.length;
   let paths='';
   const colors=['#ff2e88','#2ff3e0','#d4af37'];
-  WHEEL_SEGMENTS.forEach((val,i)=>{
+  WHEEL_SEGMENTS.forEach((seg,i)=>{
     const start=i*segAngle, end=start+segAngle;
     const x1=150+140*Math.cos(Math.PI*(start-90)/180), y1=150+140*Math.sin(Math.PI*(start-90)/180);
     const x2=150+140*Math.cos(Math.PI*(end-90)/180), y2=150+140*Math.sin(Math.PI*(end-90)/180);
     const mid=(start+end)/2, tx=150+95*Math.cos(Math.PI*(mid-90)/180), ty=150+95*Math.sin(Math.PI*(mid-90)/180);
+    const label = seg.type==='spins' ? (seg.value+' SPIN'+(seg.value>1?'S':'')) : String(seg.value);
+    const fontSize = seg.type==='spins' ? 11 : 14;
     paths += '<path d="M150,150 L'+x1+','+y1+' A140,140 0 0,1 '+x2+','+y2+' Z" fill="'+colors[i%colors.length]+'" opacity="0.88" stroke="#0b0710" stroke-width="1.5"/>';
-    paths += '<text x="'+tx+'" y="'+ty+'" fill="#0b0710" font-family="Space Mono" font-weight="700" font-size="14" text-anchor="middle">'+val+'</text>';
+    paths += '<text x="'+tx+'" y="'+ty+'" fill="#0b0710" font-family="Space Mono" font-weight="700" font-size="'+fontSize+'" text-anchor="middle" transform="rotate('+(mid+90)+' '+tx+' '+ty+')">'+label+'</text>';
   });
-  const statusText = S.spinning ? 'Spinning...' : (canSpin ? 'Your daily spin is ready!' : 'Come back tomorrow for another spin.');
-  const resultHtml = (!S.spinning && S.lastReward && S.lastSpinDate===todayStr()) ? '<div class="wheel-result">+'+S.lastReward+' chips!</div>' : '';
+  const statusText = spinStatusText();
+  const resultHtml = (!S.spinning && S.lastReward && S.lastSpinDate===todayStr())
+    ? '<div class="wheel-result">+'+S.lastReward+(S.lastRewardType==='spins'?' spin'+(S.lastReward>1?'s':''):' chips')+'!</div>'
+    : '';
   return '<div class="wheel-view">' +
       '<div class="wheel-wrap"><div class="wheel-pointer"></div><div class="wheel-hub"></div>' +
       '<svg id="wheelSvg" viewBox="0 0 300 300">'+paths+'</svg></div>' +
@@ -805,6 +949,66 @@ function wheelHtml(){
       '</div>';
 }
 function bindWheel(){ const btn=document.getElementById('spinBtn'); if(btn) btn.onclick=spinWheel; }
+
+function storeHtml(){
+  const subnav = '<div class="store-subnav">' +
+    '<button class="store-tab-btn '+(S.storeTab==='titles'?'active':'')+'" data-storetab="titles">Titles</button>' +
+    '<button class="store-tab-btn '+(S.storeTab==='halos'?'active':'')+'" data-storetab="halos">Halos</button>' +
+    '<button class="store-tab-btn '+(S.storeTab==='accessories'?'active':'')+'" data-storetab="accessories">Accessories</button>' +
+    '</div>';
+
+  if(S.storeTab==='halos'){
+    return '<div class="store-view">' + subnav +
+      '<div class="store-coming-soon"><div class="zone-label" style="font-size:22px;">HALOS</div><div class="store-sub">Coming soon.</div></div>' +
+      '</div>';
+  }
+  if(S.storeTab==='accessories'){
+    return '<div class="store-view">' + subnav +
+      '<div class="store-coming-soon"><div class="zone-label" style="font-size:22px;">ACCESSORIES</div><div class="store-sub">Coming soon.</div></div>' +
+      '</div>';
+  }
+
+  const owned = S.myTitles || {};
+  const rows = TITLE_CATALOG.map(item=>{
+    const isOwned = !!owned[item.id];
+    const isEquipped = S.equippedTitle===item.id;
+    const canAfford = S.myChips >= item.price;
+    let actionHtml;
+    if(isEquipped){
+      actionHtml = '<button class="btn btn-ghost" disabled>Equipped</button>';
+    } else if(isOwned){
+      actionHtml = '<button class="btn btn-gold" data-equip="'+item.id+'">Equip</button>';
+    } else {
+      actionHtml = '<button class="btn btn-gold" data-buy="'+item.id+'" '+(canAfford?'':'disabled')+'>Buy — '+item.price+'</button>';
+    }
+    if(item.cardImg){
+      return '<div class="store-item store-item-card tier-'+titleTier(item.price)+'">' +
+        '<img src="'+item.cardImg+'" class="store-card-img" alt="'+esc(item.name)+'" />' +
+        actionHtml +
+        '</div>';
+    }
+    const iconHtml = item.icon;
+    return '<div class="store-item tier-'+titleTier(item.price)+'">' +
+      '<div class="store-item-name">'+iconHtml+' '+esc(item.name)+'</div>' +
+      actionHtml +
+      '</div>';
+  }).join('');
+  const clearBtn = S.equippedTitle ? '<button class="btn btn-ghost" id="clearTitleBtn">Remove Title</button>' : '';
+  return '<div class="store-view">' + subnav +
+    '<div class="store-head"><div class="zone-label" style="font-size:20px;">TITLE STORE</div>' +
+    '<div class="store-sub">Spend chips on a title that shows next to your name at the table and in chat.</div></div>' +
+    '<div class="store-grid">'+rows+'</div>' +
+    (clearBtn?'<div style="margin-top:14px;">'+clearBtn+'</div>':'') +
+    '</div>';
+}
+function bindStore(){
+  document.querySelectorAll('[data-storetab]').forEach(el=>{
+    el.onclick=()=>{ S.storeTab=el.dataset.storetab; renderTable(); };
+  });
+  document.querySelectorAll('[data-buy]').forEach(el=>{ el.onclick=()=>buyTitle(el.dataset.buy); });
+  document.querySelectorAll('[data-equip]').forEach(el=>{ el.onclick=()=>equipTitle(el.dataset.equip); });
+  const clearBtn=document.getElementById('clearTitleBtn'); if(clearBtn) clearBtn.onclick=()=>equipTitle(null);
+}
 
 init();
 })();
