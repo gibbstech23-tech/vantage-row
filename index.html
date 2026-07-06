@@ -277,6 +277,7 @@ const WHEEL_SEGMENTS = [
   {type:'spins', value:2}, {type:'spins', value:3}
 ];
 const AFK_MS = 45000;
+const HOST_INACTIVE_MS = 10*60*1000; // 10 minutes without placing a bet
 const NAME_KEY = 'vantage-row-name';
 
 /* ===================== STATE ===================== */
@@ -370,7 +371,8 @@ function normalizeTable(raw){
         result: rs.result || null,
         title: rs.title || null,
         halo: rs.halo || null,
-        chips: (typeof rs.chips === 'number') ? rs.chips : null
+        chips: (typeof rs.chips === 'number') ? rs.chips : null,
+        lastPlayedAt: (typeof rs.lastPlayedAt === 'number') ? rs.lastPlayedAt : 0
       });
     } else {
       seats.push(null);
@@ -405,7 +407,7 @@ async function init(){
   if(saved) S.myName = saved;
   render();
   if(S.myName) await afterLogin();
-  setInterval(()=>{ if(S.table && S.table.phase==='playing') renderTable(); }, 3000);
+  setInterval(()=>{ if(S.table && (S.table.phase==='playing' || S.table.phase==='betting')) renderTable(); }, 3000);
 }
 async function afterLogin(){
   const existing = await fbGet('players/'+S.myName);
@@ -452,7 +454,7 @@ async function sitDown(idx){
   await tableTransaction(t=>{
     if(t.seats.some(s=>s && s.name===S.myName)) return false;
     if(t.seats[idx]) return false;
-    t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null, title:S.equippedTitle||null, halo:S.equippedHalo||null, chips:S.myChips};
+    t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null, title:S.equippedTitle||null, halo:S.equippedHalo||null, chips:S.myChips, lastPlayedAt:Date.now()};
     return true;
   });
 }
@@ -488,6 +490,16 @@ async function kickSeat(idx){
   if(!t.seats[idx]) return;
   await vacateSeat(idx);
 }
+async function kickInactiveHost(){
+  const t = S.table;
+  if(!t || t.phase!=='betting') return;
+  const host = t.seats[0];
+  if(!host || host.name===S.myName) return; // can't kick yourself this way
+  const mySeatIdx = t.seats.findIndex(s=>s && s.name===S.myName);
+  if(mySeatIdx===-1) return; // must be seated yourself to use this
+  if(Date.now()-(host.lastPlayedAt||0) < HOST_INACTIVE_MS) return;
+  await vacateSeat(0);
+}
 async function placeBet(amount){
   if(amount<=0) return;
   const t = normalizeTable(await fbGet('table'));
@@ -506,6 +518,7 @@ async function placeBet(amount){
     const i = tt.seats.findIndex(s=>s && s.name===S.myName);
     if(i===-1) return false;
     tt.seats[i].bet = amount;
+    tt.seats[i].lastPlayedAt = Date.now();
     return true;
   });
 }
@@ -629,7 +642,7 @@ async function dealerPlayAndSettle(){
 async function newRound(){
   await tableTransaction(t=>{
     if(t.phase!=='payout' && t.phase!=='betting') return false;
-    t.seats = t.seats.map(s=> s ? {name:s.name, bet:0, hand:[], status:'active', result:null, title:s.title||null, halo:s.halo||null, chips:(typeof s.chips==='number'?s.chips:null)} : null);
+    t.seats = t.seats.map(s=> s ? {name:s.name, bet:0, hand:[], status:'active', result:null, title:s.title||null, halo:s.halo||null, chips:(typeof s.chips==='number'?s.chips:null), lastPlayedAt:(typeof s.lastPlayedAt==='number'?s.lastPlayedAt:0)} : null);
     t.dealerHand=[]; t.deck=[]; t.turnIndex=-1; t.turnStartedAt=0; t.phase='betting';
     t.message='Grab a seat and place your bet.';
     return true;
@@ -939,7 +952,9 @@ function renderTable(){
   }
 
   const afkReady = t.phase==='playing' && (Date.now()-t.turnStartedAt > AFK_MS);
-  const controlsSig = t.phase+'|'+mySeatIdx+'|'+(mySeatIdx>=0?t.seats[mySeatIdx].bet:'')+'|'+t.turnIndex+'|'+afkReady+'|'+S.myChips;
+  const hostSeat0 = t.seats[0];
+  const hostInactiveReady = t.phase==='betting' && mySeatIdx>=0 && mySeatIdx!==0 && hostSeat0 && hostSeat0.name!==S.myName && (Date.now()-(hostSeat0.lastPlayedAt||0) > HOST_INACTIVE_MS);
+  const controlsSig = t.phase+'|'+mySeatIdx+'|'+(mySeatIdx>=0?t.seats[mySeatIdx].bet:'')+'|'+t.turnIndex+'|'+afkReady+'|'+hostInactiveReady+'|'+S.myChips;
   if(S._sig.controls!==controlsSig){
     let controlsHtml;
     if(t.phase==='betting'){
@@ -955,6 +970,7 @@ function renderTable(){
           '<div class="bet-amount">'+t.seats[mySeatIdx].bet+'</div>' +
           '<button class="btn btn-ghost" id="standUpBtn">Leave Seat</button>' +
           '<button class="btn btn-gold" id="dealBtn" '+(canDeal?'':'disabled')+'>Deal Cards</button>' +
+          (hostInactiveReady?'<button class="btn btn-ghost" id="kickHostBtn">Kick Inactive Host</button>':'') +
           '</div>';
       }
     } else if(t.phase==='playing'){
@@ -985,6 +1001,7 @@ function renderTable(){
     }
     const standUpBtn=document.getElementById('standUpBtn'); if(standUpBtn) standUpBtn.onclick=standUp;
     const dealBtn=document.getElementById('dealBtn'); if(dealBtn) dealBtn.onclick=dealRound;
+    const kickHostBtn=document.getElementById('kickHostBtn'); if(kickHostBtn) kickHostBtn.onclick=kickInactiveHost;
     const hitBtn=document.getElementById('hitBtn'); if(hitBtn) hitBtn.onclick=hitCurrent;
     const standBtn=document.getElementById('standBtn'); if(standBtn) standBtn.onclick=standCurrent;
     const skipBtn=document.getElementById('skipBtn'); if(skipBtn) skipBtn.onclick=skipAfk;
