@@ -135,6 +135,20 @@
   .wheel-result{font-family:'Bebas Neue';font-size:40px;color:var(--gold-bright);text-shadow:0 0 14px rgba(244,217,118,0.7);}
 
   .store-view{flex:1;overflow-y:auto;padding:24px 20px 40px;max-width:1200px;margin:0 auto;width:100%;}
+  .slots-view{flex:1;overflow-y:auto;padding:24px 20px 40px;max-width:1300px;margin:0 auto;width:100%;}
+  .slots-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .slot-machine{background:linear-gradient(180deg,#2a1810,#150b08);border:3px solid var(--gold);border-radius:16px;padding:14px;width:190px;text-align:center;flex-shrink:0;}
+  .slot-machine.mine{border-color:var(--cyan);box-shadow:0 0 16px rgba(47,243,224,0.3);}
+  .slot-machine-title{font-family:'Bebas Neue';color:var(--gold-bright);letter-spacing:2px;font-size:14px;margin-bottom:2px;}
+  .slot-occupant{font-size:11px;color:var(--text-dim);margin-bottom:8px;min-height:14px;}
+  .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#000;border:2px solid var(--gold);border-radius:8px;padding:6px;margin-bottom:8px;}
+  .slot-cell{background:#1a1220;border-radius:4px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .slot-result{font-family:'Space Mono';font-size:12px;margin-bottom:8px;}
+  .slot-result.win{color:var(--good);}
+  .slot-result.lose{color:var(--text-dim);}
+  .slot-controls{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .slot-controls .chip-select button{width:32px;height:32px;font-size:9px;}
+  .slot-controls .btn{width:100%;padding:8px;font-size:12px;}
   .store-head{text-align:center;margin-bottom:20px;}
   .store-subnav{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
   .store-tab-btn{background:none;border:1px solid var(--felt-line);color:var(--text-dim);padding:8px 18px;border-radius:999px;font-family:'Inter';font-weight:600;font-size:13px;cursor:pointer;transition:.15s;}
@@ -278,6 +292,26 @@ const WHEEL_SEGMENTS = [
 ];
 const AFK_MS = 45000;
 const HOST_INACTIVE_MS = 10*60*1000; // 10 minutes without placing a bet
+const SLOT_COUNT = 5;
+const SLOT_CHIP_VALUES = [25,100,250,500];
+// Rebalanced payout table — targets ~96% return, in line with blackjack's real odds (see prior discussion).
+const SLOT_SYMBOLS = [
+  {icon:'🍒', weight:30, mult:1,  name:'Cherry'},
+  {icon:'🍋', weight:24, mult:2,  name:'Lemon'},
+  {icon:'🔔', weight:18, mult:4,  name:'Bell'},
+  {icon:'⭐', weight:12, mult:8,  name:'Star'},
+  {icon:'💎', weight:7,  mult:17, name:'Diamond'},
+  {icon:'7️⃣', weight:3,  mult:70, name:'Seven'}
+];
+const SLOT_POOL = [];
+SLOT_SYMBOLS.forEach(s=>{ for(let i=0;i<s.weight;i++) SLOT_POOL.push(s); });
+function randomSlotSymbol(){ return SLOT_POOL[Math.floor(Math.random()*SLOT_POOL.length)]; }
+// 8 lines across the 3x3 grid: 3 rows, 3 columns, 2 diagonals. Each entry is [col,row] coordinates.
+const SLOT_LINES = [
+  [[0,0],[1,0],[2,0]], [[0,1],[1,1],[2,1]], [[0,2],[1,2],[2,2]],
+  [[0,0],[0,1],[0,2]], [[1,0],[1,1],[1,2]], [[2,0],[2,1],[2,2]],
+  [[0,0],[1,1],[2,2]], [[0,2],[1,1],[2,0]]
+];
 const NAME_KEY = 'vantage-row-name';
 
 /* ===================== STATE ===================== */
@@ -285,6 +319,7 @@ let S = {
   myName:null, myChips:0, view:'table',
   table:null, chat:[], spinning:false, lastSpinDate:null, lastReward:null, lastRewardType:null, chatOpenMobile:false,
   myTitles:{}, equippedTitle:null, storeTab:'titles', bonusSpins:0, myHalos:{}, equippedHalo:null, myWins:0,
+  slots:null, slotBet:25, slotSpinningIdx:null,
   _shellBuilt:false, _builtView:null, _sig:{dealer:null, msg:null, seats:null, controls:null}
 };
 let db = null;
@@ -329,6 +364,15 @@ async function tableTransaction(mutator){
     return t;
   });
   return (res.committed && res.snapshot) ? normalizeTable(res.snapshot.val()) : null;
+}
+async function slotsTransaction(mutator){
+  const res = await fbTransaction('slots', current=>{
+    const s = normalizeSlots(current);
+    const ok = mutator(s);
+    if(ok===false) return undefined;
+    return s;
+  });
+  return (res.committed && res.snapshot) ? normalizeSlots(res.snapshot.val()) : null;
 }
 
 /* ===================== CARD LOGIC ===================== */
@@ -389,6 +433,23 @@ function normalizeTable(raw){
     message: t.message || 'Grab a seat and place your bet.'
   };
 }
+// Same null-stripping concern as normalizeTable — always rebuild a canonical 5-machine array.
+function normalizeSlots(raw){
+  const r = raw || {};
+  const machines = [];
+  for(let i=0;i<SLOT_COUNT;i++){
+    const m = r[i];
+    machines.push({
+      occupant: (m && m.occupant) || null,
+      grid: (m && m.grid) || null,
+      lastBet: (m && m.lastBet) || 0,
+      lastPayout: (m && typeof m.lastPayout==='number') ? m.lastPayout : null,
+      lastWinLines: (m && m.lastWinLines) || [],
+      lastSpinAt: (m && m.lastSpinAt) || 0
+    });
+  }
+  return machines;
+}
 function seatName(t,i){ return t.seats[i] ? t.seats[i].name : ''; }
 function firstOpenTurn(t, fromIdx){
   for(let i=fromIdx+1;i<t.seats.length;i++){
@@ -417,6 +478,7 @@ async function afterLogin(){
   }
   fbListen('table', val=>{ S.table = normalizeTable(val); renderTable(); });
   fbListen('chat', val=>{ S.chat = val || []; renderChat(); });
+  fbListen('slots', val=>{ S.slots = normalizeSlots(val); if(S.view==='slots') renderTable(); });
   fbListen('players/'+S.myName, val=>{
     const profile = val || {chips:STARTING_CHIPS, lastSpinDate:null};
     const chipsChanged = S.myChips !== profile.chips;
@@ -731,6 +793,103 @@ async function syncSeatChips(){
   });
 }
 
+/* ===================== SLOT MACHINES ===================== */
+async function sitAtMachine(idx){
+  await slotsTransaction(s=>{
+    if(s.some(m=>m.occupant===S.myName)) return false; // already at a machine
+    if(s[idx].occupant) return false; // taken
+    s[idx].occupant = S.myName;
+    return true;
+  });
+}
+async function leaveMachine(idx){
+  await slotsTransaction(s=>{
+    if(s[idx].occupant!==S.myName) return false;
+    s[idx].occupant = null;
+    s[idx].grid = null;
+    s[idx].lastPayout = null;
+    s[idx].lastWinLines = [];
+    return true;
+  });
+}
+async function spinMachine(idx){
+  if(S.slotSpinningIdx!==null) return; // already spinning one machine at a time
+  const bet = S.slotBet;
+  if(bet<=0 || S.myChips<bet) return;
+  const machine = S.slots && S.slots[idx];
+  if(!machine || machine.occupant!==S.myName) return;
+
+  S.slotSpinningIdx = idx;
+  renderTable();
+
+  // deduct the bet up front via a transaction on the player's own chips
+  const chipRes = await fbTransaction('players/'+S.myName+'/chips', cur=>{
+    const chips = cur==null ? STARTING_CHIPS : cur;
+    if(chips<bet) return; // abort — insufficient funds
+    return chips - bet;
+  });
+  if(!chipRes.committed){ S.slotSpinningIdx = null; renderTable(); return; }
+
+  // build the 3x3 grid (col-major, matching SLOT_LINES coordinates)
+  const grid = [0,1,2].map(()=>[randomSlotSymbol(), randomSlotSymbol(), randomSlotSymbol()]);
+
+  await playSlotAnimation(idx, grid);
+
+  let totalPayout = 0;
+  const winLines = [];
+  SLOT_LINES.forEach((line, lIdx)=>{
+    const [a,b,c] = line.map(([col,row])=>grid[col][row]);
+    if(a.name===b.name && b.name===c.name){
+      totalPayout += bet*a.mult;
+      winLines.push(lIdx);
+    }
+  });
+
+  if(totalPayout>0){
+    await fbTransaction('players/'+S.myName+'/chips', cur=>(cur==null?STARTING_CHIPS:cur)+totalPayout);
+  }
+  await slotsTransaction(s=>{
+    if(s[idx].occupant!==S.myName) return false; // left mid-spin, don't overwrite whoever's there now
+    s[idx].grid = grid.flat().map(sym=>sym.name); // flatten col-major to a flat 9-name array
+    s[idx].lastBet = bet;
+    s[idx].lastPayout = totalPayout;
+    s[idx].lastWinLines = winLines;
+    s[idx].lastSpinAt = Date.now();
+    return true;
+  });
+  if(totalPayout>0){
+    await pushChat('system', S.myName+' hit the slots for '+totalPayout+' chips!');
+  }
+  S.slotSpinningIdx = null;
+  renderTable();
+}
+function playSlotAnimation(idx, grid){
+  // simple local-only cycling animation for the spinning player; spectators just see the instant final update
+  return new Promise(resolve=>{
+    const cellIds = [];
+    for(let col=0;col<3;col++) for(let row=0;row<3;row++) cellIds.push('slotcell-'+idx+'-'+col+'-'+row);
+    const durations = [700, 1000, 1300]; // per-column stop time
+    const intervals = [];
+    [0,1,2].forEach(col=>{
+      const timer = setInterval(()=>{
+        [0,1,2].forEach(row=>{
+          const el = document.getElementById('slotcell-'+idx+'-'+col+'-'+row);
+          if(el) el.textContent = randomSlotSymbol().icon;
+        });
+      }, 80);
+      intervals.push(timer);
+      setTimeout(()=>{
+        clearInterval(timer);
+        [0,1,2].forEach(row=>{
+          const el = document.getElementById('slotcell-'+idx+'-'+col+'-'+row);
+          if(el) el.textContent = grid[col][row].icon;
+        });
+        if(col===2) setTimeout(resolve, 150);
+      }, durations[col]);
+    });
+  });
+}
+
 /* ===================== DAILY WHEEL ===================== */
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function canSpinNow(){ return !S.spinning && (S.lastSpinDate!==todayStr() || (S.bonusSpins||0)>0); }
@@ -832,6 +991,7 @@ function shellHtml(){
     '<div class="logo"><span class="dot"></span>VANTAGE ROW</div>' +
     '<div class="wallet">' +
     '<div class="tabbtn '+(S.view==='table'?'active':'')+'" data-view="table">TABLE</div>' +
+    '<div class="tabbtn '+(S.view==='slots'?'active':'')+'" data-view="slots">SLOTS</div>' +
     '<div class="tabbtn '+(S.view==='wheel'?'active':'')+'" data-view="wheel">DAILY SPIN</div>' +
     '<div class="tabbtn '+(S.view==='store'?'active':'')+'" data-view="store">STORE</div>' +
     '<div class="chip-badge"><span class="chip-icon"></span><span>'+S.myChips+'</span></div>' +
@@ -886,6 +1046,13 @@ function renderTable(){
     main.innerHTML = storeHtml();
     bindStore();
     S._builtView='store';
+    return;
+  }
+
+  if(S.view==='slots'){
+    main.innerHTML = slotsHtml();
+    bindSlots();
+    S._builtView='slots';
     return;
   }
 
@@ -1058,6 +1225,62 @@ function wheelHtml(){
       '</div>';
 }
 function bindWheel(){ const btn=document.getElementById('spinBtn'); if(btn) btn.onclick=spinWheel; }
+
+function slotsHtml(){
+  const slots = S.slots || Array(SLOT_COUNT).fill({occupant:null, grid:null, lastBet:0, lastPayout:null, lastWinLines:[]});
+  const myIdx = slots.findIndex(m=>m.occupant===S.myName);
+  const cards = slots.map((m,idx)=>{
+    const isMine = m.occupant===S.myName;
+    const cells = [];
+    for(let row=0; row<3; row++){
+      for(let col=0; col<3; col++){
+        const flatIdx = col*3+row;
+        const symName = m.grid ? m.grid[flatIdx] : null;
+        const symObj = symName ? SLOT_SYMBOLS.find(s=>s.name===symName) : null;
+        cells.push('<div class="slot-cell" id="slotcell-'+idx+'-'+col+'-'+row+'">'+(symObj?symObj.icon:'❔')+'</div>');
+      }
+    }
+    let resultHtml = '';
+    if(m.lastPayout!==null && m.grid){
+      resultHtml = m.lastPayout>0
+        ? '<div class="slot-result win">+'+m.lastPayout+' chips!</div>'
+        : '<div class="slot-result lose">No win</div>';
+    }
+    let controlsHtml;
+    if(!m.occupant){
+      controlsHtml = '<button class="btn btn-gold" data-sitmachine="'+idx+'">Sit Here</button>';
+    } else if(isMine){
+      const chips = SLOT_CHIP_VALUES.map(v=>'<button data-slotchip="'+v+'" class="'+(S.slotBet===v?'selected':'')+'">'+v+'</button>').join('');
+      const spinning = S.slotSpinningIdx===idx;
+      controlsHtml = '<div class="chip-select">'+chips+'</div>' +
+        '<div class="bet-amount" style="font-size:16px;">'+S.slotBet+'</div>' +
+        '<button class="btn btn-gold" data-spinmachine="'+idx+'" '+(spinning||S.myChips<S.slotBet?'disabled':'')+'>'+(spinning?'Spinning...':'Spin')+'</button>' +
+        '<button class="btn btn-ghost" data-leavemachine="'+idx+'" '+(spinning?'disabled':'')+'>Leave</button>';
+    } else {
+      controlsHtml = '<div class="empty-note" style="margin:0;font-size:12px;">'+esc(m.occupant)+' is playing</div>';
+    }
+    return '<div class="slot-machine '+(isMine?'mine':'')+'">' +
+      '<div class="slot-machine-title">MACHINE '+(idx+1)+'</div>' +
+      '<div class="slot-occupant">'+(m.occupant?esc(m.occupant)+(isMine?' (you)':''):'— empty —')+'</div>' +
+      '<div class="slot-grid">'+cells.join('')+'</div>' +
+      resultHtml +
+      '<div class="slot-controls">'+controlsHtml+'</div>' +
+      '</div>';
+  }).join('');
+  return '<div class="slots-view">' +
+    '<div class="zone-label" style="text-align:center;font-size:20px;margin-bottom:6px;">SLOT MACHINES</div>' +
+    '<div class="store-sub" style="text-align:center;margin-bottom:20px;">Sit at an empty machine to play. Everyone at the table can see who is spinning and how they do.</div>' +
+    '<div class="slots-row">'+cards+'</div>' +
+    '</div>';
+}
+function bindSlots(){
+  document.querySelectorAll('[data-sitmachine]').forEach(el=>{ el.onclick=()=>sitAtMachine(parseInt(el.dataset.sitmachine,10)); });
+  document.querySelectorAll('[data-leavemachine]').forEach(el=>{ el.onclick=()=>leaveMachine(parseInt(el.dataset.leavemachine,10)); });
+  document.querySelectorAll('[data-spinmachine]').forEach(el=>{ el.onclick=()=>spinMachine(parseInt(el.dataset.spinmachine,10)); });
+  document.querySelectorAll('[data-slotchip]').forEach(el=>{
+    el.onclick=()=>{ S.slotBet=parseInt(el.dataset.slotchip,10); renderTable(); };
+  });
+}
 
 function storeHtml(){
   const subnav = '<div class="store-subnav">' +
