@@ -73,6 +73,8 @@
   .seat.empty{opacity:.7;border-style:dashed;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:56px;font-size:11px;padding:6px;}
   .seat.empty:hover{opacity:1;border-color:var(--gold);}
   .seat .pname{font-weight:700;font-size:19px;color:var(--text);margin-bottom:3px;text-shadow:0 1px 3px #000;}
+  .seat-chip-balance{display:flex;align-items:center;justify-content:center;gap:5px;font-family:'Space Mono';font-size:14px;color:var(--gold-bright);margin-bottom:4px;}
+  .seat-chip-balance .chip-icon{width:13px;height:13px;}
   .seat .pbet{font-family:'Space Mono';font-size:17px;color:var(--gold-bright);}
   .seat .status-pill{position:absolute;top:-10px;right:4px;font-size:12px;padding:3px 9px;border-radius:999px;font-weight:700;letter-spacing:.5px;}
   .status-pill.stand{background:var(--cyan);color:#052;}
@@ -86,7 +88,10 @@
   .host-hint{color:var(--gold-bright);font-size:10px;}
   .kick-btn{position:absolute;top:-10px;left:4px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;border:none;font-size:10px;font-weight:700;cursor:pointer;line-height:18px;padding:0;}
   .seat-title-anchor{position:absolute;top:-8px;transform:translateX(-50%);z-index:3;pointer-events:none;text-align:center;}
+  .seat-title-anchor.halo-anchor{top:18px;}
   .seat-title-banner{width:clamp(150px,22vw,240px);}
+  .seat-halo-img{width:clamp(55px,9vw,100px);}
+  .seat-halo-img img{width:100%;height:auto;display:block;}
   .seat-title-banner img{width:100%;height:auto;display:block;}
   .seat-title-banner.seat-title-plain{width:auto;display:inline-block;}
   .kick-btn:hover{background:#ff7a7a;}
@@ -140,6 +145,8 @@
   .store-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
   @media (max-width:900px){ .store-grid{grid-template-columns:1fr 1fr;} }
   @media (max-width:640px){ .store-grid{grid-template-columns:1fr;} }
+  .store-grid-halos{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media (max-width:640px){ .store-grid-halos{grid-template-columns:1fr;} }
   .store-item{display:flex;align-items:center;justify-content:space-between;background:var(--void-2);border:1px solid var(--felt-line);border-radius:12px;padding:12px 16px;}
   .store-item-name{font-weight:600;font-size:14px;color:var(--text);}
   .title-badge{display:inline-flex;align-items:center;gap:3px;font-family:'Space Mono';font-weight:700;font-size:9px;border-radius:999px;padding:2px 8px 2px 6px;margin-top:3px;letter-spacing:.2px;white-space:nowrap;}
@@ -152,6 +159,7 @@
   .store-item.tier-legendary{border-left:3px solid var(--gold-bright);}
   .store-item.store-item-card{border-left:none;}
   .store-card-img{width:clamp(150px,22vw,240px);height:auto;border-radius:6px;display:block;}
+  .halo-progress{font-family:'Space Mono';font-size:11px;color:var(--text-dim);margin-left:10px;}
 
   .gate{position:fixed;inset:0;background:var(--void);display:flex;align-items:center;justify-content:center;z-index:50;}
   .gate-card{background:var(--void-2);border:2px solid var(--gold);border-radius:16px;padding:36px 34px;width:min(360px,90%);text-align:center;box-shadow:0 0 50px rgba(255,46,136,0.2);}
@@ -204,6 +212,9 @@ const SEAT_COUNT = 5;
 // Horizontal positions (% of felt image width) measured from the actual betting-spot
 // markers painted into assets/table-bg.png. Vertical position is fixed in CSS (.seat{top:58%}).
 const SEAT_X_PERCENT = [14.0, 32.6, 49.7, 68.0, 85.4];
+// Small per-seat horizontal nudge (px) so the title/halo lines up with each character's actual
+// head position in the background art, since heads aren't perfectly centered on the seat slot.
+const BADGE_X_NUDGE_PX = [-12, -15, 6, 0, 36];
 const CHIP_VALUES = [25,100,250,500];
 const STARTING_CHIPS = 1000;
 const TITLE_CATALOG = [
@@ -233,6 +244,31 @@ function seatTitleHtml(id){
   if(item.cardImg) return '<div class="seat-title-banner"><img src="'+item.cardImg+'" alt="'+esc(item.name)+'" /></div>';
   return '<div class="seat-title-banner seat-title-plain">'+titleBadgeHtml(id)+'</div>';
 }
+
+// Halos: unlocked with wins AND chips together, shown in the same floating spot as titles.
+// DRAFT prices/win-thresholds — placeholders for you to replace, same as titles/wheel.
+const HALO_CATALOG = [
+  {id:'gold-sparkle2', name:'Radiant Halo', price:500, winsRequired:10, cardImg:'assets/halos/gold-sparkle2.png'},
+  {id:'green-vine', name:'Verdant Halo', price:1500, winsRequired:25, cardImg:'assets/halos/green-vine.png'},
+  {id:'pink-hearts2', name:'Sweetheart Halo', price:2500, winsRequired:50, cardImg:'assets/halos/pink-hearts2.png'},
+  {id:'cyan-flame', name:'Azure Halo', price:3500, winsRequired:100, cardImg:'assets/halos/cyan-flame.png'},
+  {id:'purple-flame', name:'Arcane Halo', price:4500, winsRequired:200, cardImg:'assets/halos/purple-flame.png'},
+  {id:'ice-blue', name:'Frost Halo', price:5500, winsRequired:300, cardImg:'assets/halos/ice-blue.png'},
+  {id:'fire2', name:'Blazing Halo', price:6500, winsRequired:400, cardImg:'assets/halos/fire2.png'},
+  {id:'dark-purple', name:'Shadow Halo', price:7500, winsRequired:500, cardImg:'assets/halos/dark-purple.png'}
+];
+function haloName(id){ const item = HALO_CATALOG.find(h=>h.id===id); return item ? item.name : ''; }
+function seatHaloHtml(id){
+  const item = HALO_CATALOG.find(h=>h.id===id);
+  if(!item) return '';
+  return '<div class="seat-halo-img"><img src="'+item.cardImg+'" alt="'+esc(item.name)+'" /></div>';
+}
+// Whatever's equipped in this shared display slot — halo takes precedence since the two are mutually exclusive anyway.
+function seatBadgeHtml(seat){
+  if(seat.halo) return seatHaloHtml(seat.halo);
+  if(seat.title) return seatTitleHtml(seat.title);
+  return '';
+}
 const WHEEL_SEGMENTS = [
   {type:'chips', value:25}, {type:'chips', value:75}, {type:'chips', value:100},
   {type:'chips', value:125}, {type:'chips', value:150}, {type:'chips', value:250},
@@ -247,7 +283,7 @@ const NAME_KEY = 'vantage-row-name';
 let S = {
   myName:null, myChips:0, view:'table',
   table:null, chat:[], spinning:false, lastSpinDate:null, lastReward:null, lastRewardType:null, chatOpenMobile:false,
-  myTitles:{}, equippedTitle:null, storeTab:'titles', bonusSpins:0,
+  myTitles:{}, equippedTitle:null, storeTab:'titles', bonusSpins:0, myHalos:{}, equippedHalo:null, myWins:0,
   _shellBuilt:false, _builtView:null, _sig:{dealer:null, msg:null, seats:null, controls:null}
 };
 let db = null;
@@ -332,7 +368,9 @@ function normalizeTable(raw){
         hand: rs.hand || [],
         status: rs.status || 'active',
         result: rs.result || null,
-        title: rs.title || null
+        title: rs.title || null,
+        halo: rs.halo || null,
+        chips: (typeof rs.chips === 'number') ? rs.chips : null
       });
     } else {
       seats.push(null);
@@ -379,13 +417,18 @@ async function afterLogin(){
   fbListen('chat', val=>{ S.chat = val || []; renderChat(); });
   fbListen('players/'+S.myName, val=>{
     const profile = val || {chips:STARTING_CHIPS, lastSpinDate:null};
+    const chipsChanged = S.myChips !== profile.chips;
     S.myChips = profile.chips;
     S.lastSpinDate = profile.lastSpinDate;
     S.bonusSpins = profile.bonusSpins || 0;
     S.myTitles = profile.titles || {};
     S.equippedTitle = profile.equippedTitle || null;
+    S.myHalos = profile.halos || {};
+    S.equippedHalo = profile.equippedHalo || null;
+    S.myWins = profile.wins || 0;
     updateHeader();
     renderTable();
+    if(chipsChanged) syncSeatChips();
   });
 }
 
@@ -409,7 +452,7 @@ async function sitDown(idx){
   await tableTransaction(t=>{
     if(t.seats.some(s=>s && s.name===S.myName)) return false;
     if(t.seats[idx]) return false;
-    t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null, title:S.equippedTitle||null};
+    t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null, title:S.equippedTitle||null, halo:S.equippedHalo||null, chips:S.myChips};
     return true;
   });
 }
@@ -564,9 +607,12 @@ async function dealerPlayAndSettle(){
     results[s.name] = {outcome, payout};
   }
   for(const name in results){
-    const {payout} = results[name];
+    const {payout, outcome} = results[name];
     if(payout>0){
       await fbTransaction('players/'+name+'/chips', cur=>(cur==null?STARTING_CHIPS:cur)+payout);
+    }
+    if(outcome==='win'){
+      await fbTransaction('players/'+name+'/wins', cur=>(cur||0)+1);
     }
   }
   await tableTransaction(t2=>{
@@ -583,14 +629,16 @@ async function dealerPlayAndSettle(){
 async function newRound(){
   await tableTransaction(t=>{
     if(t.phase!=='payout' && t.phase!=='betting') return false;
-    t.seats = t.seats.map(s=> s ? {name:s.name, bet:0, hand:[], status:'active', result:null, title:s.title||null} : null);
+    t.seats = t.seats.map(s=> s ? {name:s.name, bet:0, hand:[], status:'active', result:null, title:s.title||null, halo:s.halo||null, chips:(typeof s.chips==='number'?s.chips:null)} : null);
     t.dealerHand=[]; t.deck=[]; t.turnIndex=-1; t.turnStartedAt=0; t.phase='betting';
     t.message='Grab a seat and place your bet.';
     return true;
   });
 }
 
-/* ===================== TITLE STORE ===================== */
+/* ===================== TITLE & HALO STORE =====================
+   Titles and halos share one display slot at the seat, so equipping
+   one always clears the other — never both at once. */
 async function buyTitle(id){
   const item = TITLE_CATALOG.find(t=>t.id===id);
   if(!item) return;
@@ -604,25 +652,68 @@ async function buyTitle(id){
     profile.chips = chips - item.price;
     profile.titles = titles;
     profile.equippedTitle = id;
+    profile.equippedHalo = null;
     return profile;
   });
-  if(res.committed) await syncSeatTitle(id);
+  if(res.committed) await syncSeatBadge(id, null);
 }
 async function equipTitle(id){
   if(id && !(S.myTitles && S.myTitles[id])) return; // don't equip something not owned
   await fbTransaction('players/'+S.myName, cur=>{
     const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null};
     profile.equippedTitle = id;
+    if(id) profile.equippedHalo = null; // equipping a title clears any halo; clearing title (id=null) leaves halo alone
     return profile;
   });
-  await syncSeatTitle(id);
+  await syncSeatBadge(id, id ? null : S.equippedHalo);
 }
-async function syncSeatTitle(id){
-  // if currently seated, mirror the equipped title into the live table so others see it update instantly
+async function buyHalo(id){
+  const item = HALO_CATALOG.find(h=>h.id===id);
+  if(!item) return;
+  if(S.myHalos && S.myHalos[id]) { await equipHalo(id); return; } // already owned, just equip
+  if((S.myWins||0) < item.winsRequired) return; // not enough wins yet
+  const res = await fbTransaction('players/'+S.myName, cur=>{
+    const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null};
+    const chips = profile.chips==null ? STARTING_CHIPS : profile.chips;
+    const wins = profile.wins || 0;
+    if(chips < item.price) return; // abort — insufficient funds
+    if(wins < item.winsRequired) return; // abort — insufficient wins
+    const halos = Object.assign({}, profile.halos||{});
+    halos[id] = true;
+    profile.chips = chips - item.price;
+    profile.halos = halos;
+    profile.equippedHalo = id;
+    profile.equippedTitle = null;
+    return profile;
+  });
+  if(res.committed) await syncSeatBadge(null, id);
+}
+async function equipHalo(id){
+  if(id && !(S.myHalos && S.myHalos[id])) return; // don't equip something not owned
+  await fbTransaction('players/'+S.myName, cur=>{
+    const profile = cur || {chips:STARTING_CHIPS, lastSpinDate:null};
+    profile.equippedHalo = id;
+    if(id) profile.equippedTitle = null;
+    return profile;
+  });
+  await syncSeatBadge(id ? null : S.equippedTitle, id);
+}
+async function syncSeatBadge(titleId, haloId){
+  // if currently seated, mirror the equip change into the live table so others see it update instantly
   await tableTransaction(t=>{
     const idx = t.seats.findIndex(s=>s && s.name===S.myName);
     if(idx===-1) return false;
-    t.seats[idx].title = id || null;
+    t.seats[idx].title = titleId || null;
+    t.seats[idx].halo = haloId || null;
+    return true;
+  });
+}
+async function syncSeatChips(){
+  // if currently seated, mirror the latest chip balance into the live table so everyone sees it update
+  await tableTransaction(t=>{
+    const idx = t.seats.findIndex(s=>s && s.name===S.myName);
+    if(idx===-1) return false;
+    t.seats[idx].chips = S.myChips;
     return true;
   });
 }
@@ -829,6 +920,7 @@ function renderTable(){
         (showKick?'<button class="kick-btn" data-kick="'+i+'" title="Kick from seat">✕</button>':'') +
         '<div class="status-pill '+pillClass+'">'+pillLabel+'</div>' +
         '<div class="pname">'+esc(s.name)+(isMe?' (you)':'')+(i===0?' <span class="host-hint">👑</span>':'')+'</div>' +
+        (typeof s.chips==='number' ? '<div class="seat-chip-balance"><span class="chip-icon"></span>'+s.chips+'</div>' : '') +
         '<div class="hand" style="min-height:60px;transform:scale(0.8)">'+cardsHtml+'</div>' +
         (s.hand.length?'<div class="hand-total">'+handTotal(s.hand)+'</div>':'') +
         '<div class="pbet">Bet: '+s.bet+'</div>' +
@@ -836,8 +928,8 @@ function renderTable(){
         '</div>';
     }).join('');
     const titleBannersHtml = t.seats.map((s,i)=>{
-      if(!s || !s.title) return '';
-      return '<div class="seat-title-anchor" style="left:'+SEAT_X_PERCENT[i]+'%;">'+seatTitleHtml(s.title)+'</div>';
+      if(!s || (!s.title && !s.halo)) return '';
+      return '<div class="seat-title-anchor'+(s.halo?' halo-anchor':'')+'" style="left:calc('+SEAT_X_PERCENT[i]+'% + '+BADGE_X_NUDGE_PX[i]+'px);">'+seatBadgeHtml(s)+'</div>';
     }).join('');
     const seatsRow = document.getElementById('seatsRow');
     seatsRow.innerHTML = seatsHtml + titleBannersHtml;
@@ -958,8 +1050,40 @@ function storeHtml(){
     '</div>';
 
   if(S.storeTab==='halos'){
+    const owned = S.myHalos || {};
+    const myWins = S.myWins || 0;
+    const rows = HALO_CATALOG.map(item=>{
+      const isOwned = !!owned[item.id];
+      const isEquipped = S.equippedHalo===item.id;
+      const hasEnoughWins = myWins >= item.winsRequired;
+      const canAfford = S.myChips >= item.price;
+      let actionHtml;
+      if(isEquipped){
+        actionHtml = '<button class="btn btn-ghost" disabled>Equipped</button>';
+      } else if(isOwned){
+        actionHtml = '<button class="btn btn-gold" data-equiphalo="'+item.id+'">Equip</button>';
+      } else {
+        const canBuy = hasEnoughWins && canAfford;
+        actionHtml = '<button class="btn btn-gold" data-buyhalo="'+item.id+'" '+(canBuy?'':'disabled')+'>Buy — '+item.price+' &amp; '+item.winsRequired+' Wins</button>';
+      }
+      const progressNote = (!isOwned && !isEquipped)
+        ? '<div class="halo-progress">'+myWins+'/'+item.winsRequired+' wins</div>'
+        : '';
+      return '<div class="store-item store-item-card">' +
+        '<img src="'+item.cardImg+'" class="store-card-img" alt="'+esc(item.name)+'" />' +
+        actionHtml +
+        progressNote +
+        '</div>';
+    }).join('');
+    const clearBtn = S.equippedHalo ? '<button class="btn btn-ghost" id="clearHaloBtn">Remove Halo</button>' : '';
+    const gridOrEmpty = HALO_CATALOG.length
+      ? '<div class="store-grid-halos">'+rows+'</div>'
+      : '<div class="store-coming-soon"><div class="store-sub">New halos coming soon.</div></div>';
     return '<div class="store-view">' + subnav +
-      '<div class="store-coming-soon"><div class="zone-label" style="font-size:22px;">HALOS</div><div class="store-sub">Coming soon.</div></div>' +
+      '<div class="store-head"><div class="zone-label" style="font-size:20px;">HALO STORE</div>' +
+      '<div class="store-sub">Halos need both hand wins and chips to unlock — win hands at the table to qualify, then buy. Equipping a halo replaces your title in that spot (only one shows at a time).</div></div>' +
+      gridOrEmpty +
+      (clearBtn?'<div style="margin-top:14px;">'+clearBtn+'</div>':'') +
       '</div>';
   }
   if(S.storeTab==='accessories'){
@@ -1008,6 +1132,9 @@ function bindStore(){
   document.querySelectorAll('[data-buy]').forEach(el=>{ el.onclick=()=>buyTitle(el.dataset.buy); });
   document.querySelectorAll('[data-equip]').forEach(el=>{ el.onclick=()=>equipTitle(el.dataset.equip); });
   const clearBtn=document.getElementById('clearTitleBtn'); if(clearBtn) clearBtn.onclick=()=>equipTitle(null);
+  document.querySelectorAll('[data-buyhalo]').forEach(el=>{ el.onclick=()=>buyHalo(el.dataset.buyhalo); });
+  document.querySelectorAll('[data-equiphalo]').forEach(el=>{ el.onclick=()=>equipHalo(el.dataset.equiphalo); });
+  const clearHaloBtn=document.getElementById('clearHaloBtn'); if(clearHaloBtn) clearHaloBtn.onclick=()=>equipHalo(null);
 }
 
 init();
