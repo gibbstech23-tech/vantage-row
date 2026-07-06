@@ -513,12 +513,13 @@ async function sendChat(text){
 
 /* ===================== SEAT / BET ===================== */
 async function sitDown(idx){
-  await tableTransaction(t=>{
+  const committed = await tableTransaction(t=>{
     if(t.seats.some(s=>s && s.name===S.myName)) return false;
     if(t.seats[idx]) return false;
     t.seats[idx] = {name:S.myName, bet:0, hand:[], status:'active', result:null, title:S.equippedTitle||null, halo:S.equippedHalo||null, chips:S.myChips, lastPlayedAt:Date.now()};
     return true;
   });
+  if(committed) await pushChat('system', S.myName+' sat down at the table.');
 }
 async function vacateSeat(idx){
   const t = normalizeTable(await fbGet('table'));
@@ -795,12 +796,13 @@ async function syncSeatChips(){
 
 /* ===================== SLOT MACHINES ===================== */
 async function sitAtMachine(idx){
-  await slotsTransaction(s=>{
+  const committed = await slotsTransaction(s=>{
     if(s.some(m=>m.occupant===S.myName)) return false; // already at a machine
     if(s[idx].occupant) return false; // taken
     s[idx].occupant = S.myName;
     return true;
   });
+  if(committed) await pushChat('system', S.myName+' sat down at Slot Machine '+(idx+1)+'.');
 }
 async function leaveMachine(idx){
   await slotsTransaction(s=>{
@@ -857,9 +859,6 @@ async function spinMachine(idx){
     s[idx].lastSpinAt = Date.now();
     return true;
   });
-  if(totalPayout>0){
-    await pushChat('system', S.myName+' hit the slots for '+totalPayout+' chips!');
-  }
   S.slotSpinningIdx = null;
   renderTable();
 }
@@ -925,10 +924,6 @@ async function spinWheel(){
   if(res.committed){
     S.lastRewardType = seg.type;
     S.lastReward = seg.value;
-    const rewardText = seg.type==='chips'
-      ? ('won '+seg.value+' chips')
-      : ('won '+seg.value+' bonus spin'+(seg.value>1?'s':''));
-    await pushChat('system', S.myName+' spun the wheel and '+rewardText+'!');
   }
   render();
 }
